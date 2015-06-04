@@ -11,7 +11,7 @@
 % som/bt/st/mt: Studies on Mechatronics, Bachelor Thesis, Semester Thesis, Master Thesis
 % fs/hs: Spring term, Autumn term
 % german/english: German/English
-\usepackage[bt,hs,english]{packages/ethasl}
+\usepackage[st,fs,english]{packages/ethasl}
 
 % Activate for german language
 %\usepackage{german}
@@ -28,18 +28,19 @@
 \begin{document}
 
 % TODO Add your title
-\title{\LaTeX\ \!-Template for Student Projects}
+\title{Incorporating Aerodynamic Effects into Model Based Control
+for Multirotors}
 %\subtitle{bla bla bla}
 
 % TODO Add name of the authors
-\studentA{Student 1}
-\studentB{Student 2}
+\studentA{Rik M. K. Bähnemann}
+%\studentB{Student 2}
 % \studentC{Student 3}
 
 % TODO Add name of the supervisors
-\supervisionA{Supervisor 1}
-%\supervisionB{Supervisor B}
-%\supervisionC{Supervisor C}
+\supervisionA{Markus Achtelik}
+\supervisionB{Michael Burri}
+\supervisionC{Mina Kamel}
 
 % TODO Change if necessary
 \projectYear{\the\year} % This year
@@ -85,6 +86,16 @@
 
 % TODO Add your own chapters here
 \input{chapters/introduction}
+\cleardoublepage
+\input{chapters/chapter_dynamics}
+\cleardoublepage
+\input{chapters/chapter_controls}
+\cleardoublepage
+\input{chapters/chapter_rotors}
+\cleardoublepage
+\input{chapters/chapter_experiment}
+\cleardoublepage
+\input{chapters/chapter_conclusion}
 \cleardoublepage
 \input{chapters/chapter}
 \cleardoublepage
