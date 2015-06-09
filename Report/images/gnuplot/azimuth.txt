@@ -1,0 +1,69 @@
+reset
+
+set loadpath "~/Software/gnuplot-5.0.0/term/PostScript"
+set datafile separator ","
+set xdata time
+set timefmt "%H:%M:%S"
+
+# whole day
+set xrange ["00:00:00":"23:59:59"]
+set format x "%H:%M"
+set xlabel 'Time [HH:MM]'
+set ylabel 'Wind Azimuth [deg]'
+
+set style rect fc lt -1 fs solid 0.2 noborder
+set obj rect from first '05:00:00', graph 0 to first '06:00:00', graph 1 back
+
+set terminal epslatex size 6.095cm,4.0cm color colortext
+set output "~/Workspace/report-fork/Report/images/windaziday.tex"
+plot "~/Downloads/ASL_student_project/Documents/Wind_Measurement/06-04-2011.txt" using 2:24 every 200 title 'wind azimuth measurement'
+
+#set terminal png
+#set output "~/Downloads/ASL_student_project/Documents/Wind_Measurement/windaziday.png"
+#plot "~/Downloads/ASL_student_project/Documents/Wind_Measurement/06-04-2011.txt" using 2:24 every 200  title 'wind azimuth measurement'
+
+#set terminal eps
+#set output "~/Downloads/ASL_student_project/Documents/Wind_Measurement/windaziday.eps"
+#plot "~/Downloads/ASL_student_project/Documents/Wind_Measurement/06-04-2011.txt" using 2:24 every 200 title 'wind azimuth measurement'
+
+# one hour
+unset obj
+set xrange ["05:00:00":"06:00:00"]
+set obj rect from first '05:30:00', graph 0 to first '05:33:00', graph 1 back
+
+
+set terminal epslatex size 6.095cm,4.0cm color colortext
+set output "~/Workspace/report-fork/Report/images/windazihour.tex"
+plot "~/Downloads/ASL_student_project/Documents/Wind_Measurement/06-04-2011.txt" using 2:24 every 10  title 'wind azimuth measurement'
+
+#set terminal png
+#set output "~/Downloads/ASL_student_project/Documents/Wind_Measurement/windazihour.png"
+#plot "~/Downloads/ASL_student_project/Documents/Wind_Measurement/06-04-2011.txt" using 2:24 every 10  title 'wind azimuth measurement'
+
+#set terminal eps
+#set output "~/Downloads/ASL_student_project/Documents/Wind_Measurement/windazihour.eps"
+#plot "~/Downloads/ASL_student_project/Documents/Wind_Measurement/06-04-2011.txt" using 2:24 every 10 title 'wind azimuth measurement'
+
+# 3 minutes
+unset obj
+set xrange ["05:30:00":"05:33:00"]
+set format x "%H:%M:%S"
+set xlabel "Time [HH:MM:SS]"
+set obj rect from first '05:32:00', graph 0 to first '05:32:02', graph 1 back
+
+
+set terminal epslatex size 6.095cm,4.0cm color colortext
+set output "~/Workspace/report-fork/Report/images/windaziminute.tex"
+plot "~/Downloads/ASL_student_project/Documents/Wind_Measurement/06-04-2011.txt" using 2:24 title 'wind azimuth measurement'
+
+#set terminal png
+#set output "~/Downloads/ASL_student_project/Documents/Wind_Measurement/windaziminute.png”
+#plot "~/Downloads/ASL_student_project/Documents/Wind_Measurement/06-04-2011.txt" using 2:24 title 'wind speed measurement'
+
+#set terminal eps
+#set output "~/Downloads/ASL_student_project/Documents/Wind_Measurement/windaziminute.eps"
+#plot "~/Downloads/ASL_student_project/Documents/Wind_Measurement/06-04-2011.txt" using 2:24 title 'wind azimuth measurement'
+
+#set terminal x11
+#plot "~/Downloads/ASL_student_project/Documents/Wind_Measurement/06-04-2011.txt" using 2:24 title 'wind speed measurement'
+

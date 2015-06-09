@@ -1,6 +1,8 @@
 \chapter{Modeling}
 \label{sec:modeling}
-In this section the MAV overall system which is to be controlled is described. It starts by describing the multirotor platform. Then the equations of motion are derived for both translation and rotation. Additionally we include wind in the model. In the fourth part a system idenfication approach is described to approximate the attitude dynamics. Next the overall dynamics to be controlled are summarized in a system diagram. Finally the system is linearized.
+The position controller proposed in this project will be model based. Therefore we need to define a detailed system which is to be controlled.
+
+In this section the MAV system is stated. It starts by describing the multirotor platform. Then the equations of motion are derived for both translation and rotation. Additionally we include wind into the model. In the fourth part a system idenfication approach is described to approximate the attitude dynamics. Next the overall dynamics to be controlled are summarized in a system diagram. Finally the system is linearized.
 
 In this project a cascaded control approach is chosen (see figure ). Attitude and motor control run at a high rate ($1000 \si{\hertz}$) in an inner loop, while the high level position controller runs at $100 \si{\hertz}$ in an outer loop. This decoupling is possible because the translational dynamics are much slower than the rotational dynamics. It simplifies the design of the position controller as only translational dynamics have to be considered explicitly and position control reduces to controlling the vehicles desired thrust and direction. 
 
@@ -147,15 +149,53 @@ The acceleration $\mathbf{a}$ in world frame can be found using Newton's second 
 \end{align}
 
 \subsubsection{Euler's Equations}
-The torque $\boldsymbol{\tau}$ acting on vehicle body's base can be found using Euler's equations for rigid body dynamics.  
+The torque $\boldsymbol{\tau}$ acting on vehicle body's base can be found using Euler's equations for rigid body dynamics.
 \begin{align}
 \boldsymbol{\tau} = \mathbf{J} \cdot  \mathbf{\dot{\boldsymbol{\omega}}} + \boldsymbol{\omega} \times \mathbf{J} \cdot \boldsymbol{\omega} = \sum_{i=1}^n \left( \mathbf{M}_{R,i}+ \mathbf{M}_{D,i} + \mathbf{F}_i \times \mathbf{r}_i \right)  \label{eq:euler}
 \end{align}
-$\mathbf{J}$  is the inertia matrix referenced to the center of mass along the base frame. $\boldsymbol{\omega}$ is the angular velocity about the same frame. $\mathbf{r}_i$ denotes the vector from the CoG of the MAV to the $i$-th rotor.
+$\mathbf{J}$  is the inertia matrix referenced to the center of mass along the base frame. $\mathbf{r}_i$ denotes the vector from the CoG of the MAV to the $i$-th rotor. $\boldsymbol{\omega}$ is the angular velocity about the same frame. For small tilt angles the angular velocity is approximately equal to the change in Euler angles in which the system is described.
+\begin{align}
+\boldsymbol{\omega} \approx \begin{bmatrix}
+\dot\phi \\ \dot\theta \\ \dot\psi
+\end{bmatrix}
+\end{align}
 
-The moment equations are dispensible, because attitude control is taken care of by an implemented controller already. We still write them down for completeness.
+
+The moment equations are dispensible, because attitude control is taken care of by an implemented controller already and its closed loop dynamics will be identified below. We still write them down for completeness.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Wind effects
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Wind Model}
+Having stated the equations of motion, it is possible to incorporate the effects of wind. This can help improve the controller performance in the case of a wind gust, if the wind is measured or known. 
+
+\subsection{Appearance}
+In general wind is not steady and constant. Both azimuth and speed tend to jump instantanously.
+
+\begin{figure}
+\centering
+\subfloat[][Wind speed data day]{
+\input{images/windday.tex}
+\label{fig:wind_speed_day}}
+\subfloat[][Wind azimuth data day]{
+\includegraphics[width=0.48\textwidth]{./images/firefly.jpg}
+\label{fig:wind_speed_day}}
+\caption{Wind observations}
+\label{fig:wind_observations}
+\end{figure}
+
+\begin{figure}
+\input{images/windday.tex}
+\end{figure}
+
+In general a wind gust is defined as 
+
+
+\subsection{Forces}
+Wind acts mainly in  
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % System Formulation
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{System Formulation}
+
