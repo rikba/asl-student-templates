@@ -53,5 +53,5 @@ plot path_to_data using 2:24 lt rgb 'blue'  title ''
 
 set terminal x11
 set ylabel 'Wind azimuth [deg]'
-plot path_to_data using 2:24 lt rgb 'blue'  title 'wind speed measurement'
+plot path_to_data using 2:24 title 'wind speed measurement'
 

@@ -17,33 +17,27 @@
 %\usepackage{german}
 %\usepackage{ae}
 
-% URL citing
-\usepackage{url}
-% SI units
-\usepackage{siunitx}
-% block diagram with tikz
-\usepackage{tikz}
-\usepackage{tikzscale}	% includegraphics .tikz
-\usetikzlibrary{calc}
-% Matrix alligned subfigures
-\usepackage[lofdepth,lotdepth]{subfig}
-% convert eps to pdf
-\graphicspath{{images/}}
-\usepackage[outdir=./images/]{epstopdf}	% total path do not work
-%\makeatletter
-%\epstopdfsetup{program@epstopdf=epstopdf}
-%\makeatother
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % LaTeX preamble
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\input{preambles/my_preamble}
 \input{preambles/asl_preamble}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Title page
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{document}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% User defined macros
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\E}{\mathrm{E}}
+\newcommand{\Var}{\mathrm{Var}}
+\newcommand*\mean[1]{\overline{#1}}
+\renewcommand{\d}[1]{\ensuremath{\operatorname{d}\!{#1}}}
 
 % TODO Add your title
 \title{Incorporating Aerodynamic Effects into Model Based Controllers

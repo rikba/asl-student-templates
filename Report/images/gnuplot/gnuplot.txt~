@@ -8,50 +8,52 @@ set timefmt "%H:%M:%S"
 
 # whole day
 set xrange ["00:00:00":"23:59:59"]
-set yrange [0:360]
+set yrange [0:16]
 set format x "%H"
 set xlabel 'time $[\si{\hour}]$'
 set xtics '00:00:00','06:00:00','24:00:00'
-set ytics 0,90,360
+set ytics 0,4,16
 
 set style rect fc lt -1 fs solid 0.2 noborder
 set obj rect from first '05:00:00', graph 0 to first '06:00:00', graph 1 back
 
 set terminal epslatex size 6.095cm,4.0cm color colortext
-set output path_to_image_folder."windaziday.tex"
-plot path_to_data using 2:24 every 200 lt rgb 'blue' title ''
+set output path_to_image_folder."windday.tex"
+plot path_to_data using 2:23 every 200 title ''
+
 
 # one hour
 unset obj
 set format x "%M"
 set xlabel 'time $[\si{\minute}]$'
 set xrange ["05:00:00":"06:00:00"]
-set yrange [0:180]
+set yrange [0:16]
 set xtics '05:00:00','00:15:00','06:00:00'
-set ytics 0,45,180
+set ytics 0,4,16
 set obj rect from first '05:30:00', graph 0 to first '05:33:00', graph 1 back
 
 
 set terminal epslatex size 6.095cm,4.0cm color colortext
-set output path_to_image_folder."windazihour.tex"
-plot path_to_data using 2:24 every 10 lt rgb 'blue'   title ''
+set output path_to_image_folder.'windhour.tex'
+plot path_to_data using 2:23 every 10  title ''
 
 # 3 minutes
 unset obj
 set xrange ["05:30:00":"05:33:00"]
-set yrange [0:180]
+set yrange [0:12]
 set format x "%M"
-set xlabel 'time $[\si{\minute}]$'
+set xlabel "Time [MM]"
 set xtics '05:30:00','00:01:00','05:33:00'
-set ytics 0,45,180
+set ytics 0,2,12
 set obj rect from first '05:32:00', graph 0 to first '05:32:02', graph 1 back
 
 
 set terminal epslatex size 6.095cm,4.0cm color colortext
-set output path_to_image_folder."windaziminute.tex"
-plot path_to_data using 2:24 lt rgb 'blue'  title ''
+set output path_to_image_folder.'windminute.tex'
+plot path_to_data using 2:23 title ''
 
 set terminal x11
-set ylabel 'Wind azimuth [deg]'
-plot path_to_data using 2:24 lt rgb 'blue'  title 'wind speed measurement'
+set ylabel 'Wind Speed [m/s]'
+plot path_to_data using 2:23 title 'wind speed measurement'
+
 

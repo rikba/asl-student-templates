@@ -2,11 +2,11 @@
 \label{sec:modeling}
 The position controller proposed in this project will be model based. Therefore we need to define a detailed system which is to be controlled.
 
-In this section the MAV system is stated. It starts by describing the multirotor platform. Then the equations of motion are derived for both translation and rotation. Additionally we include wind into the model. In the fourth part a system idenfication approach is described to approximate the attitude dynamics. Next the overall dynamics to be controlled are summarized in a system diagram. Finally the system is linearized.
+In this section the MAV system is stated. It starts by describing the multirotor platform. Then the equations of motion are derived for both translation and rotation. Additionally we include wind into the model. In the fourth part a system identification approach is described to approximate the attitude dynamics. Next the overall dynamics to be controlled are summarized in a system diagram. Finally the system is linearized.
 
 In this project a cascaded control approach is chosen (see figure ). Attitude and motor control run at a high rate ($1000 \si{\hertz}$) in an inner loop, while the high level position controller runs at $100 \si{\hertz}$ in an outer loop. This decoupling is possible because the translational dynamics are much slower than the rotational dynamics. It simplifies the design of the position controller as only translational dynamics have to be considered explicitly and position control reduces to controlling the vehicles desired thrust and direction. 
 
-In order for the vehicle to move to a reference position, the position controller computes the desired thrust force and roll, pitch, yaw angles. The inner loop then takes care of finding the appropriate moment applied to the vehicle body to archieve the desired attitude. The attitude controller is given and its dynamics are identified as a linear system.
+In order for the vehicle to move to a reference position, the position controller computes the desired thrust force and roll, pitch, yaw angles. The inner loop then takes care of finding the appropriate moment applied to the vehicle body to archive the desired attitude. The attitude controller is given and its dynamics are identified as a linear system.
 
 \begin{figure}
 \centering
@@ -29,7 +29,7 @@ Within this project we use an AscTec Firefly (see figure \ref{pics:firefly}). Wh
 
 In platforms with even-numbered motors, neighboring rotors typically rotate in opposite direction. This compensates yaw moments and gives control over heading. Tilting is accomplished by increasing the thrust on on one side of the vehicle and decreasing it on the opposite side.
 
-The Firefly has six $8 \si{\in}$ rotors equally aligned around the center. It is $60.5 \times 66.5 \times 16.5 \si{\cm}$ in size and weights $1.6 \si{\kg}$. The maximum thrust is $36 \si{\N}$ and it reaches a maximum airspeed of $15 \si{\metre\per\second}$.
+The Firefly has six $20 \si{\cm}$ diameter rotors equally aligned around the center. It is $60.5 \times 66.5 \times 16.5 \si{\cm}$ in size and weights $1.6 \si{\kg}$. The maximum thrust is $36 \si{\N}$ and it reaches a maximum airspeed of $15 \si{\metre\per\second}$.
 
 \begin{figure}
    \centering
@@ -120,7 +120,7 @@ The remaining major forces are thrust $F_T$ and drag $F_D$. Thrust acts perpendi
 
 \begin{align}
 \mathbf{F}_T&= \omega^2 \cdot C_T \cdot _B\mathbf{e}_z  &\text{(thrust)} ,\label{eq:rotor_begin} \\
-\mathbf{F}_D&= -\omega \cdot  C_D \cdot _B\mathbf{\boldsymbol{\nu}}^\perp  &\text{(drag)} ,\\
+\mathbf{F}_D&= -\omega \cdot  C_D \cdot _B\mathbf{\boldsymbol{\nu}}^\perp  &\text{(drag)} , \label{eq:drag_force}\\
 \mathbf{M}_R&= \omega \cdot C_R \cdot _B\mathbf{\boldsymbol{\nu}}^\perp &\text{(roll)} , \\
 \mathbf{M}_D&= -\epsilon \cdot C_M \cdot \mathbf{F_T}  &\text{(drag)}, \label{eq:rotor_end}
 \end{align}
@@ -167,32 +167,77 @@ The moment equations are dispensible, because attitude control is taken care of 
 % Wind effects
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Wind Model}
-Having stated the equations of motion, it is possible to incorporate the effects of wind. This can help improve the controller performance in the case of a wind gust, if the wind is measured or known. 
+In general wind is neither steady nor constant. Both azimuth and speed tend to jump instantanously. Especially these wind gusts can deflect the MAV dangerously.
 
-\subsection{Appearance}
-In general wind is not steady and constant. Both azimuth and speed tend to jump instantanously.
+Having stated the equations of motion, it is possible to incorporate the effects of wind into the dynamics. This can help improve the controller performance in the case of a wind gust. If the wind is measured or known, the controller can feedforward the effects.
+
+\subsection{Wind Dynamics}
+Gust is usually defined as a increase of wind velocity $\mathbf{w}$ by $5\si{\metre\per\second}$ over the $10$-minute average wind velocity and has to have a duration of $3 \si{\second}$ to $20 \si{\second}$.
+
+Figure \ref{fig:wind_observations} shows a typical wind observation. The wind speed is showing random deviation around some time-varying average. From top to bottom the time intervals marked by the vertical grey boxes are magnified to identify short time behaviour.
+
 
 \begin{figure}
 \centering
-\subfloat[][Wind speed data day]{
+\subfloat[][{$24\si{\hour}$ wind speed $[ \si{\metre\per\second} ]$ observation }]{
 \input{images/windday.tex}
 \label{fig:wind_speed_day}}
-\subfloat[][Wind azimuth data day]{
-\includegraphics[width=0.48\textwidth]{./images/firefly.jpg}
-\label{fig:wind_speed_day}}
+\subfloat[][{$24\si{\hour}$ wind azimuth $[ \si{\degree} ]$ observation}]{
+\input{images/windaziday.tex}
+\label{fig:wind_azi_day}}
+\qquad
+\subfloat[][{Wind speeds $[ \si{\metre\per\second} ]$ from \formattime{5}{0}{0} to \formattime{6}{0}{0} }]{
+\input{images/windhour.tex}
+\label{fig:wind_speed_hour}}
+\subfloat[][{Wind azimuth $[ \si{\degree} ]$ from \formattime{5}{0}{0} to \formattime{6}{0}{0} }]{
+\input{images/windazihour.tex}
+\label{fig:wind_azi_hour}}
+\qquad
+\subfloat[][{Wind speed $[ \si{\metre\per\second} ]$ from \formattime{5}{30}{0} to \formattime{5}{33}{0}  }]{
+\input{images/windminute.tex}
+\label{fig:wind_speed_minutes}}
+\subfloat[][{Wind azimuth $[ \si{\degree} ]$ from \formattime{5}{30}{0} to \formattime{5}{33}{0}  }]{
+\input{images/windaziminute.tex}
+\label{fig:wind_azi_minutes}}
 \caption{Wind observations}
 \label{fig:wind_observations}
 \end{figure}
 
-\begin{figure}
-\input{images/windday.tex}
-\end{figure}
 
-In general a wind gust is defined as 
+In the bottom picture \subref{fig:wind_speed_minutes} one can detect a wind gust at \formattime{5}{32}{0}. The wind velocity suddenly reaches a peak of $10 \si{\metre\per\second}$ after averaging around $5 \si{\metre\per\second}$. 
+
+However, the MAV position control action takes place in a even smaller time interval. For visualization a $3 \si{\second}$ interval has been highlighted with a vertical grey line in figure \ref{fig:wind_observations} \subref{fig:wind_speed_minutes} and \subref{fig:wind_azi_minutes}. 
+
+Within this small time window the wind field can be modeled as a stationary stochastic process. The wind speed vector is characterised by a constant mean and variance.
+
+\begin{align}
+\E[\mathbf{w}(t)] &= \mean{\mathbf{w}} \\
+\Var[\mathbf{w}(t)] &= \E\left[\left(\mathbf{w}(t)-\mean{\mathbf{w}} \right) \left(\mathbf{w}(t)-\mean{\mathbf{w}} \right)^T \right]  =\mathbf{ \Sigma }
+\end{align}
+
+Thus the differential equation governing the wind field is
+\begin{align}
+\d{\mathbf{w}(t)} &= \mathbf{ \Sigma } \d{\mathbf{W}(t)} \\
+\mathbf{w}(0) &= \mean{\mathbf{w}}
+\end{align}
+where $\mathbf{W}(t)$ is standard Brownian motion.
+
+A more convenient way is to state the dynamics as a discrete-time state space systems.
+\begin{align}
+\mathbf{w}(k+1) &= \mathbf{w}(k) + \mathbf{Q} \boldsymbol{\varepsilon}(k) \\ 
+{\varepsilon}_i (k) &\sim \mathcal{N}(0,1) & \forall i \in \{ x,y,z \}
+\label{eq:wind_state_space}
+\end{align}
 
 
-\subsection{Forces}
-Wind acts mainly in  
+\subsection{Wind Forces}
+Wind affects the MAV dynamics in two ways. On one hand it causes pressure on the multirotor surface opposed to the wind field. We call this load area force $\mathbf{F}_A$. On the other hand the wind field influences the total rotor drag. We call this load drag force $\mathbf{F}_D$.
+
+The area force is given by
+
+Following rotor blade theory, the drag force is given as in equation \ref{eq:drag_force}.
+
+For small air speeds the rotor drag force is 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % System Formulation
