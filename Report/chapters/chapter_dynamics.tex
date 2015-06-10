@@ -199,7 +199,7 @@ Figure \ref{fig:wind_observations} shows a typical wind observation. The wind sp
 \subfloat[][{Wind azimuth $[ \si{\degree} ]$ from \formattime{5}{30}{0} to \formattime{5}{33}{0}  }]{
 \input{images/windaziminute.tex}
 \label{fig:wind_azi_minutes}}
-\caption{Wind observations}
+\caption[Wind observations]{Wind observations. The data is gathered using an anemometer $2.76 \si{\metre}$ above ground in an open field in California, USA. More information and measurement data can be found in Google's open source data collection \cite{www:googleosb,www:googleheliostat}.}
 \label{fig:wind_observations}
 \end{figure}
 
@@ -231,14 +231,91 @@ A more convenient way is to state the dynamics as a discrete-time state space sy
 
 
 \subsection{Wind Forces}
-Wind affects the MAV dynamics in two ways. On one hand it causes pressure on the multirotor surface opposed to the wind field. We call this load area force $\mathbf{F}_A$. On the other hand the wind field influences the total rotor drag. We call this load drag force $\mathbf{F}_D$.
+Wind affects the MAV dynamics in two ways. On one hand it causes pressure on the multirotor surface opposed to the wind field. We call this load area drag $\mathbf{F}_A$. On the other hand the wind field influences the total rotor drag. We name this load drag force $\mathbf{F}_D$.
 
-The area force is given by
+Schiano and others examined the effects of area drag on a Parrot AR Drone 2.0 (quadrotor) without polystyrene casing \cite{Schiano2014,www:parrot}. This MAV is a little smaller than the AscTec Firefly but the results are qualitatively comparable. They described area drag according to Rayleigh equations.
+
+\begin{align}
+\mathbf{F}_A = \frac{1}{2} C_A \rho \norm{\mathbf{w}}_2 \mathbf{w}  \label{eq:area_drag}
+\end{align}
+with
+\begin{align*}
+C_A&: & \text{area drag coefficient} \\
+\rho&: &\text{air density} \\
+\mathbf{w}&: &\text{wind speed}.
+\end{align*}
+
+In wind tunnel experiments they measured the forces on the switched off MAV for different angles of attack. They concluded that the drag coefficient is mainly a function of heading towards the wind. The worst case (largest force) equaled to $\psi = 90 \si{\degree}$, when the processor housing is exposed with the long side and thus the largest area towards the wind. 
 
 Following rotor blade theory, the drag force is given as in equation \ref{eq:drag_force}.
+\begin{align}
+\mathbf{F}_D&= \sum_{i=1}^6 \omega_i \cdot  C_D \cdot _B\mathbf{\mathbf{w}}^\perp
+\end{align}
 
-For small air speeds the rotor drag force is 
+Using the worst case area drag coefficient $C_A = 0.02$ from Schianos experiments and the rotor drag coefficent $C_D = \num{6.84 e-5}$ for the Firefly we simulate the resulting forces. Figure \ref{fig:area_vs_rotor_drag} shows the area and the rotor drag at different wind speeds and a hovering Firefly.    
 
+\begin{figure} 
+\centering 
+\input{images/area_vs_rotor_drag.tikz} 
+\caption{Comparison of area and rotor drag} 
+\label{fig:area_vs_rotor_drag} 
+\end{figure}
+
+For small air speeds $\norm{\mathbf{w}}_2 \leq 5 \si{\metre\per\second}$ at which the MAV usually operates the rotor drag force is at least five times larger as the area drag. As a result, area drag will be neglected and rotor drag modeled.
+
+To incorporate wind explicitly into the Newton's equations \ref{eq:newton}, the air speed $_B\boldsymbol{\nu}$ is defined as the difference between vehicle speed and wind speed.
+\begin{align}
+_B{\boldsymbol{\nu}} =_{BW}{\mathbf{R}} \left( _W{\dot{\mathbf{x}}} - _W{\mathbf{w}} \right) 
+\end{align} 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% System Identification
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{System Identification}
+Instead of modeling the attitude controller, motor response and attitude dynamics we consider them as a black box. We approximate the attitude and thrust response of the MAV with a linear system $\mathbf{G}$.
+
+To do this, we excite the real system with desired control inputs $\mathbf{U} = \left[\phi_{ref} ~ \theta_{ref} ~ \psi_{ref} ~ T_{ref} \right]^T$ and measure its response $\mathbf{Y} = \left[\phi ~ \theta ~ \psi ~ T \right]^T$. 
+
+Figure \ref{pics:sys_id_model} shows a schematic model of the system. Given the control input the attitude controller calculates a desired torque $\boldsymbol{\tau}_{ref}$. The desired motor speeds $\mathbf{n}_{ref}$ are then determined using a allocation map. These reference speeds are forwarded to the motor and the actual motor speeds affect the MAV attitude.
+
+\begin{figure}
+\centering
+\includegraphics{images/sys_id_model.tikz}
+\caption{Schematic model $\mathbf{Y} = \mathbf{G} \mathbf{U}$ of black box to be identified.}
+\label{pics:sys_id_model}
+\end{figure}
+
+From the experiment data the system $\mathbf{G}$ is identified using MATLAB's transfer function estimation \texttt{tfest}. The method uses prediction error minimization (PEM).
+
+The identification has to be done both for the MATLAB simulation environment and the real system.
+
+\subsection{MATLAB Simulator}
+\label{sec:matlab_simulator}
+MATLAB is a good platform for prototyping control algorithms. It is easy to program and has helpful toolboxes and interfaces. We use it to simulate the non-linear inner loop dynamics depicted in figure \ref{pics:sys_id_model}.
+
+The attitude is controlled by a geometric controller proposed by Lee \cite{Lee2010}. The allocation from desired thrust and torque to desired rotor rates is done by solving equation \ref{eq:allocation} for rotor rates. The matrix $\mathbf{A} \in \mathbb{4\times n}$ is called allocation matrix.
+\begin{align}
+\begin{bmatrix}
+T_{ref} \\ \boldsymbol{\tau}_{ref}
+\end{bmatrix} = \mathbf{A} \cdot \begin{bmatrix}
+\omega_0^2 \\ \omega_1^2 \\ \vdots \\ \omega_{n-1}^2
+\end{bmatrix} \label{eq:allocation} 
+\end{align}
+For a hexacopter we have
+\begin{align}
+\mathbf{A} = \begin{bmatrix}
+C_T & C_T & C_T & C_T & C_T & C_T \\
+s\frac{\pi}{6} l C_T &   l C_T &  s\frac{\pi}{6} l C_T & -s\frac{\pi}{6} l C_T & -l C_T & -s\frac{\pi}{6} l C_T \\
+-c\frac{\pi}{6} l C_T &  0 & c\frac{\pi}{6} l C_T &  c\frac{\pi}{6} l C_T &  0 & -c\frac{\pi}{6} l C_T \\
+-C_T C_M &  C_T C_M &  -C_T C_M &   C_T C_M & -C_T C_M &  C_T C_M
+\end{bmatrix}.
+\end{align}
+This matrix can be derived by expanding the equations of motion \ref{eq:newton} and \ref{eq:euler} and finding the corresponding thrust and torque in dependence of the squared rotor rates.
+
+The closed loop motor dynamics are modeled as a first order system with a different time constant for acceleration and deceleration.
+%\begin{align}
+%
+%\end{align}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % System Formulation
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

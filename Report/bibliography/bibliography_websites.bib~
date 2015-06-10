@@ -64,7 +64,7 @@ howpublished = {\url{http://www.google-opensource.blogspot.ch/}}
 
 @MISC{www:googleheliostat,
 author = {{G}oogle},
-title = {{W}ind {O}bservation},
+title = {{O}pen {S}ource {B}log},
 month = June,
 year = {2015},
 howpublished = {\url{http://www.google.org/pdfs/google_heliostat_wind_data_collection.pdf}}
