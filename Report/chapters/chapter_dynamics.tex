@@ -1,12 +1,8 @@
 \chapter{Modeling}
 \label{sec:modeling}
-The position controller proposed in this project will be model based. Therefore we need to define a detailed system which is to be controlled.
+In this project a cascaded control approach is chosen (see figure \ref{pics:controller_sketch}). Attitude and motor control run at a high rate ($1000 \si{\hertz}$) in an inner loop, while the high level position controller runs at $100 \si{\hertz}$ in an outer loop. This decoupling is possible because the translational dynamics are much slower than the rotational dynamics. It simplifies the design of the position controller as only translational dynamics have to be considered explicitly and position control reduces to controlling the vehicles desired thrust and direction. 
 
-In this section the MAV system is stated. It starts by describing the multirotor platform. Then the equations of motion are derived for both translation and rotation. Additionally we include wind into the model. In the fourth part a system identification approach is described to approximate the attitude dynamics. Next the overall dynamics to be controlled are summarized in a system diagram. Finally the system is linearized.
-
-In this project a cascaded control approach is chosen (see figure ). Attitude and motor control run at a high rate ($1000 \si{\hertz}$) in an inner loop, while the high level position controller runs at $100 \si{\hertz}$ in an outer loop. This decoupling is possible because the translational dynamics are much slower than the rotational dynamics. It simplifies the design of the position controller as only translational dynamics have to be considered explicitly and position control reduces to controlling the vehicles desired thrust and direction. 
-
-In order for the vehicle to move to a reference position, the position controller computes the desired thrust force and roll, pitch, yaw angles. The inner loop then takes care of finding the appropriate moment applied to the vehicle body to archive the desired attitude. The attitude controller is given and its dynamics are identified as a linear system.
+In order for the vehicle to move to a reference position, the position controller computes the desired thrust force and roll, pitch, yaw angles. The inner loop then takes care of finding the appropriate moment applied to the vehicle body to archive the desired attitude. 
 
 \begin{figure}
 \centering
@@ -15,11 +11,10 @@ In order for the vehicle to move to a reference position, the position controlle
 \label{pics:controller_sketch}
 \end{figure}
 
+The position controller proposed in this project will be model based. Therefore we need to define a detailed system which is to be controlled.
 
 
-
-
-Also we only consider translational dynamics as they are crucial for position control. The rotational dynamics are handled by the attitude controller. We approximate the closed loop attitude control with a linear system identification.
+In this section the MAV system is modeled. First the multirotor platform is described. Then a compilation of models is derived to build the complete model. It starts with a detailed model on the equations of motion (section \ref{sec:eq_of_motion}). Next a model for wind and wind forces is proposed (section \ref{sec:wind_model}). In section \ref{sec:sys_id} the attitude dynamics are evaluated through system identification. Finally all these models are summarized into a set of overall dynamics which will describe our system.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Platform
@@ -44,6 +39,7 @@ It is provided with an inertial measurement unit (IMU) and has a efficient attit
 % Equations of Motion
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Equations of Motion}
+\label{sec:eq_of_motion}
 The multirotor is modeled as a rigid body with six degrees of freedom (DoF). It has three translational DoF $x$, $y$, $z$ and three rotational DoF roll, pitch and yaw ($\phi$, $\theta$, $\psi$).
 
  For modeling purposes, we define proper reference frames and notations first. Then the dynamics acting at each rotor are stated. Next the Newton's and Euler's equations for the vehicle are formed giving the complete dynamics of the vehicle.
@@ -104,6 +100,7 @@ _{AB}\mathbf{R} (\phi,\theta) &= {_{BA}\mathbf{R} (\phi,\theta)}^{-1} = {_{BA}\m
 
 
 \subsection{Dynamics}
+\label{sec:dynamics}
 Martin et al. \cite{Martin2010} propose that the dominant forces and moments acting on a regular multirotor origin from the summation of the aerodynamic effects at each rotor and the gravitational force. We state the rotor dynamics with equations \ref{eq:rotor_begin} to \ref{eq:rotor_begin} which eventually lead to the Newton's equation \ref{eq:newton} and Euler's equation \ref{eq:euler} which completely describe the vehicle equations of motion. We do not model motor dynamics as they are much faster than the translational dynamics.
 
 \subsubsection{Rotor Dynamics}
@@ -167,6 +164,7 @@ The moment equations are dispensible, because attitude control is taken care of 
 % Wind effects
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Wind Model}
+\label{sec:wind_model}
 In general wind is neither steady nor constant. Both azimuth and speed tend to jump instantanously. Especially these wind gusts can deflect the MAV dangerously.
 
 Having stated the equations of motion, it is possible to incorporate the effects of wind into the dynamics. This can help improve the controller performance in the case of a wind gust. If the wind is measured or known, the controller can feedforward the effects.
@@ -257,7 +255,7 @@ Using the worst case area drag coefficient $C_A = 0.02$ from Schianos experiment
 \begin{figure} 
 \centering 
 \input{images/area_vs_rotor_drag.tikz} 
-\caption{Comparison of area and rotor drag} 
+\caption{Comparison of area and rotor drag at different wind velocities} 
 \label{fig:area_vs_rotor_drag} 
 \end{figure}
 
@@ -272,7 +270,12 @@ _B{\boldsymbol{\nu}} =_{BW}{\mathbf{R}} \left( _W{\dot{\mathbf{x}}} - _W{\mathbf
 % System Identification
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{System Identification}
-Instead of modeling the attitude controller, motor response and attitude dynamics we consider them as a black box. We approximate the attitude and thrust response of the MAV with a linear system $\mathbf{G}$.
+\label{sec:sys_id}
+Instead of modeling the attitude controller, motor response and attitude dynamics we consider them as a black box. We approximate the attitude and thrust response of the MAV with a linear system.
+
+\begin{equation}
+\mathbf{Y} = \mathbf{G} \mathbf{U}
+\end{equation}
 
 To do this, we excite the real system with desired control inputs $\mathbf{U} = \left[\phi_{ref} ~ \theta_{ref} ~ \psi_{ref} ~ T_{ref} \right]^T$ and measure its response $\mathbf{Y} = \left[\phi ~ \theta ~ \psi ~ T \right]^T$. 
 
@@ -293,7 +296,7 @@ The identification has to be done both for the MATLAB simulation environment and
 \label{sec:matlab_simulator}
 MATLAB is a good platform for prototyping control algorithms. It is easy to program and has helpful toolboxes and interfaces. We use it to simulate the non-linear inner loop dynamics depicted in figure \ref{pics:sys_id_model}.
 
-The attitude is controlled by a geometric controller proposed by Lee \cite{Lee2010}. The allocation from desired thrust and torque to desired rotor rates is done by solving equation \ref{eq:allocation} for rotor rates. The matrix $\mathbf{A} \in \mathbb{4\times n}$ is called allocation matrix.
+The attitude is controlled by a geometric controller proposed by Lee \cite{Lee2010}. The allocation from desired thrust and torque to desired rotor rates is done by solving equation \ref{eq:allocation} for the rotor rates. The matrix $\mathbf{A} \in \mathbb{R}^{4\times n}$ is called allocation matrix.
 \begin{align}
 \begin{bmatrix}
 T_{ref} \\ \boldsymbol{\tau}_{ref}
@@ -301,7 +304,7 @@ T_{ref} \\ \boldsymbol{\tau}_{ref}
 \omega_0^2 \\ \omega_1^2 \\ \vdots \\ \omega_{n-1}^2
 \end{bmatrix} \label{eq:allocation} 
 \end{align}
-For a hexacopter we have
+For a hexacopter with equally aligned rotors we have
 \begin{align}
 \mathbf{A} = \begin{bmatrix}
 C_T & C_T & C_T & C_T & C_T & C_T \\
@@ -312,12 +315,232 @@ s\frac{\pi}{6} l C_T &   l C_T &  s\frac{\pi}{6} l C_T & -s\frac{\pi}{6} l C_T &
 \end{align}
 This matrix can be derived by expanding the equations of motion \ref{eq:newton} and \ref{eq:euler} and finding the corresponding thrust and torque in dependence of the squared rotor rates.
 
-The closed loop motor dynamics are modeled as a first order system with a different time constant for acceleration and deceleration.
-%\begin{align}
-%
-%\end{align}
+The closed loop motor dynamics are modeled as first order systems with a smaller time constant for acceleration than deceleration. Also they are limited by lower and upper bounds.
+\begin{align}
+\ddt \omega_i(t) =  \begin{cases}
+-\frac{1}{80} \omega_i(t) + \frac{1}{80} \omega_{i,ref}(t) &\omega_{i,ref}(t) > \omega_i(t) \wedge \omega_i(t)<\omega_{max} ,\\
+-\frac{1}{40} \omega_i(t) + \frac{1}{40} \omega_{i,ref}(t) &\omega_{i,ref}(t) \leq \omega_i(t)  \wedge \omega_i(t)>\omega_{min} ,\\
+0  & \left( \omega_i(t)\leq \omega_{min} \wedge \omega_{i,ref}(t) \leq \omega_i(t) \right) \vee \\
+& \left( \omega_i(t)\geq \omega_{max} \wedge \omega_{i,ref}(t) \geq \omega_i(t) \right).
+\end{cases} \label{eq:motor_model}
+\end{align}
+
+The MAV dynamics are modeled according to the dynamics section \ref{sec:dynamics}. They include rotor drag and rolling moments.
+
+\subsubsection{Simulated experiments}
+We assume that the roll, pitch, yaw and thrust dynamics are independent from each other. The transfer function matrix $\mathbf{G}$ is diagonal and we can run independent experiments for all four input/output combinations.
+
+\begin{align}
+\begin{bmatrix}
+T \\ \phi \\ \theta \\ \psi
+\end{bmatrix}
+=
+\begin{bmatrix}
+G_{T_{ref} \rightarrow T} & 0 & 0 & 0 \\ 
+0 & G_{\phi_{ref} \rightarrow \phi} & 0 & 0 \\ 
+0 & 0 & G_{\theta_{ref} \rightarrow \theta} & 0 \\ 
+0 & 0 & 0 & G_{\psi_{ref} \rightarrow \psi}  
+\end{bmatrix}
+\cdot
+\begin{bmatrix}
+T_{ref} \\ \phi_{ref} \\ \theta_{ref} \\ \psi_{ref}
+\end{bmatrix}
+\end{align}
+
+Following Lennard Ljung on input design for open loop experiments \cite{ljung1999system} we generate a pseudo-random binary sequence (PRBS). It has an optimal crest factor, zero mean, and covers most frequencies. 
+
+For all except the heading experiments, we pick a PRBS order of $n=8$, with a period length $M = 2^n-1 = 255$ which gives a sufficient resolution. $N = 10$ period repetitions are acceptable, regarding the experiment duration and coherency. For the heading experiment the PRBS order is increased to $n=12$ (period length $M=4095$) with only $N =4$ repitions, because the yaw dynamics are slower.
+
+As an example, figure \ref{fig:sys_id_phi_input} shows the roll experiment data. The amplitude levels have been chosen as
+\begin{align}
+T_{ref} \in \{\num{9.2e-4} \si{\newton},\num{36.8}\si{\newton}\} \\
+\phi_{ref} \in \{-22.5\si{\degree},22.5\si{\degree}\} \\
+\theta_{ref} \in \{-22.5\si{\degree},22.5\si{\degree}\} \\
+\psi_{ref} \in \{-90\si{\degree},90\si{\degree}\}
+\end{align}
+The first period has been dismissed to remove transients and the data detrended.
+
+\begin{figure}
+\centering
+\subfloat[][{Output $\phi$}]{
+\input{images/sys_id_phi_output.tikz}
+\label{fig:sys_id_phi_output}}
+\qquad
+\subfloat[][{PRBS input $\phi_{ref}$}]{
+\input{images/sys_id_phi_input.tikz}
+\label{fig:sys_id_phi_input}}
+\caption[Simulated system identification experiment]{Simulated system identification experiment for the roll transfer function from $\phi_{ref}\rightarrow \phi$.}
+\label{fig:sys_id_phi}
+\end{figure}
+
+\subsubsection{Transfer Functions}
+Evaluating the experiments the following transfer functions have been found.
+
+The thrust response $G_{T_{ref} \rightarrow T}$ has been identified as a first order system (equation \ref{eq:tf_T}). The time constant of the system ($0.016 \si{\second}$) lies in between the motor up and down time constants ($0.0125 \si{\second} / 0.025 \si{\second}$) specified by the non-linear motor system in equation \ref{eq:motor_model}.
+\begin{align}
+G_{T_{ref} \rightarrow T}(s) &= \frac{41}{s+62} \label{eq:tf_T}
+\end{align}
+This is identical to the state space representation
+\begin{align}
+\ddt T(t) &= \mathbf{A}_T T(t) + \mathbf{B}_T T_{ref}(t) \\
+\mathbf{A}_T &= -62	\\
+\mathbf{B}_T &=41
+\end{align}
+
+The roll transfer function $G_{\phi_{ref} \rightarrow \phi}$ has been identified as a second-order system:
+\begin{align}
+G_{\phi_{ref} \rightarrow \phi}(s) &= \frac{77.26}{s^2+12.99s+81.36}  \label{eq:tf_phi}
+\end{align}
+An observable canonical state space representation of this transfer function is
+\begin{align}
+\ddt \begin{bmatrix}
+\frac{1}{8}\dot{\phi}(t) \\ \phi(t)
+\end{bmatrix}
+&= \mathbf{A}_\phi \begin{bmatrix}
+\frac{1}{8}\dot{\phi}(t) \\ \phi(t)
+\end{bmatrix}
++ \mathbf{B}_\phi \phi_{ref}(t) \\
+y(t) &= \phi(t) \\
+\mathbf{A}_\phi &= \begin{bmatrix}
+-12.98 & -10.17 \\
+8 & 0
+\end{bmatrix} \\
+\mathbf{B}_\phi &= \begin{bmatrix}
+9.66 \\ 0
+\end{bmatrix}
+\end{align}
+
+The pitch transfer function $G_{\theta_{ref} \rightarrow \theta}$ has been identified as a second-order system:
+\begin{align}
+G_{\theta_{ref} \rightarrow \theta}(s) &= \frac{61.47}{s^2+10.88s+65.93}  \label{eq:tf_theta}
+\end{align}
+They are a little bit slower than the roll dynamics. An observable canonical state space representation of this transfer function is
+\begin{align}
+\ddt \begin{bmatrix}
+\frac{1}{8}\dot{\theta}(t) \\ \theta(t)
+\end{bmatrix}
+&= \mathbf{A}_\theta \begin{bmatrix}
+\frac{1}{8}\dot{\theta}(t) \\ \theta(t)
+\end{bmatrix}
++ \mathbf{B}_\theta \theta_{ref}(t) \\
+y(t) &= \theta(t) \\
+\mathbf{A}_\theta &= \begin{bmatrix}
+-10.95 & -8.25 \\
+8 & 0
+\end{bmatrix} \\
+\mathbf{B}_\theta &= \begin{bmatrix}
+7.69 \\ 0
+\end{bmatrix}
+\end{align}
+
+The yaw transfer function $G_{\psi_{ref} \rightarrow \psi}$ has been identified as a second-order system:
+\begin{align}
+G_{\psi_{ref} \rightarrow \psi}(s) &= \frac{1}{s}\frac{0.81}{4s+1}  \label{eq:tf_psi}
+\end{align}
+This system is a lot slower than the roll and pitch dynamics. An observable canonical state space representation of this transfer function is
+\begin{align}
+\ddt \begin{bmatrix}
+\dot{\psi}(t) \\ \psi(t)
+\end{bmatrix}
+&= \mathbf{A}_\psi \begin{bmatrix}
+\dot{\psi}(t) \\ \psi(t)
+\end{bmatrix}
++ \mathbf{B}_\psi \psi_{ref}(t) \\
+y(t) &= \psi(t) \\
+\mathbf{A}_\psi &= \begin{bmatrix}
+-0.25 & 0 \\
+1 & 0
+\end{bmatrix} \\
+\mathbf{B}_\psi &= \begin{bmatrix}
+0.2 \\ 0
+\end{bmatrix}
+\end{align}
+
+\subsubsection{Conclusion}
+The thrust dynamics \ref{eq:tf_T} are much faster than the MAV translational dynamics proposed in equation \ref{eq:newton} in section \ref{sec:dynamics}. Thus we can dismiss the first order system \ref{eq:tf_T} and instead model
+\begin{align}
+T(t) = T_{ref}(t). \label{eq:tf_T_fast}
+\end{align}
+
+The roll and pitch dynamics remain modeled as in \ref{eq:tf_phi} and \ref{eq:tf_theta}.
+
+The yaw dynamics have been identified as a lot slower than the roll and pitch dynamics. In our control algorithms we will model them constant with the current measurement $\theta_m(t_0)$ as initialization.
+\begin{align}
+\ddt \theta(t) &= 0 \\
+\theta(t_0) &= \theta_m(t_0)
+\end{align}
+
+These models will be used in prototyping the controller.
+
+\subsection{Real System}
+In the real system we will also neglect the thrust dynamics, model roll and pitch as second-order systems and consider yaw as constant. However, we can not run a PRBS experiment as in the simulated MAV.
+
+Instead we use the recorded experiment visualized in figure \ref{fig:sys_id_real_exp}. In this experiment the Firefly has been flying aggressive maneuvers indoors. The measurements have been taken using a Vicon motion capturing system.
+\begin{figure} 
+\centering 
+\input{images/sys_id_real_exp.tikz} 
+\caption{One minute system identification experiment with the real Firefly} 
+\label{fig:sys_id_real_exp} 
+\end{figure}
+
+From this experiment the identified roll and pitch dynamics are
+\begin{align}
+G_{\phi_{ref} \rightarrow \phi}(s) &= \frac{87.17}{s^2+21.26s+116.8}  \label{eq:tf_phi_real} \\
+G_{\theta_{ref} \rightarrow \theta}(s) &= \frac{62.69}{s^2+15.17s+95.38}  \label{eq:tf_theta_real}
+\end{align}
+Transforming these transfer functions into observical canonical state space representation gives the following system equations:
+
+\begin{align}
+\ddt \begin{bmatrix}
+\frac{1}{8}\dot{\phi}(t) \\ \phi(t)
+\end{bmatrix}
+&= \mathbf{A}_\phi \begin{bmatrix}
+\frac{1}{8}\dot{\phi}(t) \\ \phi(t)
+\end{bmatrix}
++ \mathbf{B}_\phi \phi_{ref}(t) \\
+y(t) &= \phi(t) \\
+\mathbf{A}_\phi &= \begin{bmatrix}
+-21.26 & -14.6 \\
+8 & 0
+\end{bmatrix} \\
+\mathbf{B}_\phi &= \begin{bmatrix}
+10.9 \\ 0
+\end{bmatrix}\\
+\ddt \begin{bmatrix}
+\frac{1}{8}\dot{\theta}(t) \\ \theta(t)
+\end{bmatrix}
+&= \mathbf{A}_\theta \begin{bmatrix}
+\frac{1}{8}\dot{\theta}(t) \\ \theta(t)
+\end{bmatrix}
++ \mathbf{B}_\theta \theta_{ref}(t) \\
+y(t) &= \theta(t) \\
+\mathbf{A}_\theta &= \begin{bmatrix}
+-15.17 & -11.92 \\
+8 & 0
+\end{bmatrix} \\
+\mathbf{B}_\theta &= \begin{bmatrix}
+7.836 \\ 0
+\end{bmatrix}
+\end{align}
+Note that the real system is a little bit faster and has a considerable higher damping. Also the real system has a smaller gain. In figure \ref{fig:sys_id_step_response} one can compare the step responses of the two estimated roll transfer functions.
+
+This difference can come from the fact that in simulation we ran a nearly optimal open loop experiment while the real experiment is closed loop, noisy and can not be excited with a PRBS input. Also the applied controllers vary and of course we don't have the real dynamics and parameters in the simulation.
+
+Still both identifications show similar behaviour and thus the simulator seems valuable.
+\begin{figure} 
+\centering 
+\input{images/sys_id_step_response.tikz} 
+\caption{Step responses ($\phi_{ref} = 30 \si{\degree}$) of the identified roll dynamics for the simulated and the real experiment} 
+\label{fig:sys_id_step_response} 
+\end{figure}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % System Formulation
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{System Formulation}
 
+
+The attitude controller is given and its dynamics are identified as a linear system.
+
+
+Also we only consider translational dynamics as they are crucial for position control. The rotational dynamics are handled by the attitude controller. We approximate the closed loop attitude control with a linear system identification.
