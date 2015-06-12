@@ -45,11 +45,12 @@ The multirotor is modeled as a rigid body with six degrees of freedom (DoF). It 
  For modeling purposes, we define proper reference frames and notations first. Then the dynamics acting at each rotor are stated. Next the Newton's and Euler's equations for the vehicle are formed giving the complete dynamics of the vehicle.
 
 \subsection{Coordinate Systems and Notations}
+\label{sec:coordinates}
 In total three main reference frames are defined. The inertial frame $W$, an intermediate heading oriented frame $A$ and a body fixed frame $B$. The inertial frame is world fixed with $z$ pointing upwards collinear to the gravitational force. The heading oriented frame $A$ is produced by rotating the world fixed frame around the $z$-axis through the current heading of the MAV. The body fixed frame is produced by rotating frame $A$ first through the pitch angle about the $y$-axis and then through the roll angle about the $x$-axis. This corresponds to Tait-Bryan angles or $zyx$-sequence. It is located at the body's principal axes of inertia.
 
-We denote vectors and matrices with a bold letter. A leading subscript on a vector denotes the corresponding coordinate frame. A leading double subscript on a matrix denotes the coordinate transformation from the second subscript frame to the first subscript frame. A single trailing subscript serves as additional discriptor. We abbreviate $\sin(\cdot)$ and $\cos(\cdot)$ with $s \cdot$ or $c \cdot$ respectively.
+We denote vectors and matrices with a bold letter. A leading subscript on a vector denotes the corresponding coordinate frame. A leading double subscript on a matrix denotes the coordinate transformation from the second subscript frame to the first subscript frame. A single trailing subscript serves as additional descriptor. We abbreviate $\sin(\cdot)$ and $\cos(\cdot)$ with $s \cdot$ or $c \cdot$ respectively.
 
-For the rotations we get
+In this project we use Euler angles to describe transformation in 3D exclusively. Diebel provides a nice review on all sorts of transformations \cite{Diebel2006}. For the rotations we get
 \begin{align}
 _{BW}\mathbf{R}_x (\phi)&=  \begin{bmatrix}
 1 & 0 & 0 \\
@@ -136,7 +137,12 @@ _B\mathbf{\boldsymbol{\nu}} &: &\text{airspeed in base coordinates} .
 The $\perp$-symbol denotes the projection of the air speed on the propeller plane (see figure). It can be calculated as:
 
 \begin{align}
-_B\mathbf{\boldsymbol{\nu}}^\perp = _B\mathbf{e}_z \times (_B\mathbf{\boldsymbol{\nu}} \times _B\mathbf{e}_z) = _B\mathbf{\boldsymbol{\nu}} - ( _B\mathbf{\boldsymbol{\nu}} \cdot _B\mathbf{e}_z) \cdot _B\mathbf{e}_z .
+_B\mathbf{\boldsymbol{\nu}}^\perp &= _B\mathbf{e}_z \times (_B\mathbf{\boldsymbol{\nu}} \times _B\mathbf{e}_z) = _B\mathbf{\boldsymbol{\nu}} - ( _B\mathbf{\boldsymbol{\nu}} \cdot _B\mathbf{e}_z) \cdot _B\mathbf{e}_z 
+=\begin{bmatrix}
+1 & 0 & 0 \\
+0 & 1 & 0 \\
+0 & 0 & 0
+\end{bmatrix} {_B\mathbf{\boldsymbol{\nu}}} \label{eq:projection}.
 \end{align}
 
 \subsubsection{Newton's Equations}
@@ -215,8 +221,8 @@ Within this small time window the wind field can be modeled as a stationary stoc
 
 Thus the differential equation governing the wind field is
 \begin{align}
-\d{\mathbf{w}(t)} &= \mathbf{ \Sigma } \d{\mathbf{W}(t)} \\
-\mathbf{w}(0) &= \mean{\mathbf{w}}
+\d{\mathbf{w}(t)} &= \mathbf{ \Sigma } \d{\mathbf{W}(t)} \label{eq:dwind} \\
+\mathbf{w}(0) &= \mean{\mathbf{w}} \label{eq:dwind_init}
 \end{align}
 where $\mathbf{W}(t)$ is standard Brownian motion.
 
@@ -247,7 +253,7 @@ In wind tunnel experiments they measured the forces on the switched off MAV for 
 
 Following rotor blade theory, the drag force is given as in equation \ref{eq:drag_force}.
 \begin{align}
-\mathbf{F}_D&= \sum_{i=1}^6 \omega_i \cdot  C_D \cdot _B\mathbf{\mathbf{w}}^\perp
+\mathbf{F}_W&= \sum_{i=1}^6 \omega_i \cdot  C_D \cdot _B\mathbf{\mathbf{w}}^\perp
 \end{align}
 
 Using the worst case area drag coefficient $C_A = 0.02$ from Schianos experiments and the rotor drag coefficent $C_D = \num{6.84 e-5}$ for the Firefly we simulate the resulting forces. Figure \ref{fig:area_vs_rotor_drag} shows the area and the rotor drag at different wind speeds and a hovering Firefly.    
@@ -264,7 +270,19 @@ For small air speeds $\norm{\mathbf{w}}_2 \leq 5 \si{\metre\per\second}$ at whic
 To incorporate wind explicitly into the Newton's equations \ref{eq:newton}, the air speed $_B\boldsymbol{\nu}$ is defined as the difference between vehicle speed and wind speed.
 \begin{align}
 _B{\boldsymbol{\nu}} =_{BW}{\mathbf{R}} \left( _W{\dot{\mathbf{x}}} - _W{\mathbf{w}} \right) 
-\end{align} 
+\end{align}
+According to equation \ref{eq:drag_force} and \ref{eq:projection}, the total drag force in world coordinates acting on the multirotor is then
+\begin{align}
+\mathbf{F}_{D,total}&= - \sum_{i=1}^n \omega_i \cdot C_D \cdot _{WB}\mathbf{R} \cdot \begin{bmatrix}
+1 & 0 & 0 \\
+0 & 1 & 0 \\
+0 & 0 & 0
+\end{bmatrix}
+\cdot _{BW}\mathbf{R} \left( _W{\dot{\mathbf{x}}} - _W{\mathbf{w}} \right) \label{eq:total_drag}
+\end{align}
+
+%\subsubsection{Remarks on sum of rotor rates}
+%The sum of rotor rates denoted in the total drag force in equation \ref{eq:total_drag} is a time varying component in our system model and should be modeled as a state.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % System Identification
@@ -464,10 +482,10 @@ T(t) = T_{ref}(t). \label{eq:tf_T_fast}
 
 The roll and pitch dynamics remain modeled as in \ref{eq:tf_phi} and \ref{eq:tf_theta}.
 
-The yaw dynamics have been identified as a lot slower than the roll and pitch dynamics. In our control algorithms we will model them constant with the current measurement $\theta_m(t_0)$ as initialization.
+The yaw dynamics have been identified as a lot slower than the roll and pitch dynamics. In our control algorithms we will model them constant with the current measurement $\psi_m(t_0)$ as initialization.
 \begin{align}
-\ddt \theta(t) &= 0 \\
-\theta(t_0) &= \theta_m(t_0)
+\ddt \psi(t) &= 0 \label{eq:const_yaw} \\ 
+\psi(t_0) &= \theta_m(t_0) 
 \end{align}
 
 These models will be used in prototyping the controller.
@@ -538,9 +556,213 @@ Still both identifications show similar behaviour and thus the simulator seems v
 % System Formulation
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{System Formulation}
+Having all necessary components modeled we can state the complete non-linear model to be controlled. The translational dynamics are to be modeled by the motions of equations stated in the Newton's equations \ref{eq:newton}. The other dynamics, i.e. attitude control, allocation mapping and motor response are modeled as the black box model described in in the system identification section \ref{sec:sys_id}. The overall system is scratched in figure \ref{pics:control_system}.
 
+\begin{figure}
+\centering
+\includegraphics{images/control_system.tikz}
+\caption{Schematic model of the overall control system.}
+\label{pics:control_system}
+\end{figure}
 
-The attitude controller is given and its dynamics are identified as a linear system.
+Summarized, the following state-space system is governing the system.
+\begin{align}
+\mathbf{X} &= \begin{bmatrix}
+\frac{1}{8} \dot{\phi} & \phi & \frac{1}{8} \dot{\theta} & \theta & x & y & z & \dot{x} & \dot{y} & \dot{z}
+\end{bmatrix}^T & \text{(states)}  \label{eq:states}\\
+\mathbf{U} &= \begin{bmatrix}
+T_{ref} & \phi_{ref} & \theta_{ref} & \psi_{ref}
+\end{bmatrix}^T & \text{(inputs)} \\
+\mathbf{Y} &= \mathbf{X} & \text{(outputs)} \\
+\mathbf{W} &= \begin{bmatrix}
+w_x & w_y & w_z
+\end{bmatrix}^T & \text{(disturbances)}
+\end{align}
+\begin{align}
+f\left(\mathbf{X},\mathbf{U},\mathbf{W}\right) &= \ddt \mathbf{X}  \\
+&= \begin{bmatrix}
+\mathbf{A}_\phi \begin{bmatrix}
+\frac{1}{8}\dot{\phi}(t) \\ \phi(t)
+\end{bmatrix}
++ \mathbf{B}_\phi \phi_{ref}(t) \\
+\mathbf{A}_\theta \begin{bmatrix}
+\frac{1}{8}\dot{\theta}(t) \\ \theta(t)
+\end{bmatrix}
++ \mathbf{B}_\theta \theta_{ref}(t) \\
+\dot{x} \\
+\dot{y} \\
+\dot{z} \\
+\frac{1}{m} \left( {_{WB}\mathbf{R}} \left( \begin{bmatrix}
+0 \\ 0 \\ T_{ref}
+\end{bmatrix} 
+-    \left( {_{BW}{\mathbf{R}}} \left({\dot{\mathbf{x}}} - {\E[\mathbf{w}]} \right) \right)^\perp \right) {C_D} {\displaystyle \sum_{i=1}^n {\omega_i}}\right) + \begin{bmatrix}
+0 \\ 0 \\ -g
+\end{bmatrix} 
+\end{bmatrix} \label{eq:state_diff}\\
+g \left( \mathbf{X},\mathbf{U} \right) &= \mathbf{X} \label{eq:measurement}
+\end{align}
 
+\begin{remark}
+As stated in the system identification section \ref{sec:sys_id} in equation \ref{eq:const_yaw}, we will consider the heading $\psi$ not as a state, but as a constant due to its slow dynamics. The controllers will set the reference heading equal the desired heading and use the currently measured heading as a parameter.
+\end{remark}
 
-Also we only consider translational dynamics as they are crucial for position control. The rotational dynamics are handled by the attitude controller. We approximate the closed loop attitude control with a linear system identification.
+\begin{remark}
+The sum of all rotor rates ${\sum_{i=1}^n {\omega_i(t)}}$, which is entering the drag force, is actually dynamic. Especially with large changes in thrust it varies a lot. However, because most time of a flight takes place around hovering thrust and in the end the effect of hovering is small, we approximate the rotor rates with the hovering rates $\bar{\omega}$.
+\begin{align}
+{\sum_{i=1}^n {\omega_i(t)}} = n \cdot \bar{\omega}
+\end{align}
+\end{remark}
+
+\begin{remark}
+Desiring a deterministic problem formulation, we consider the expected value of the current wind $\E[\mathbf{w}]$ instead of its stochastic process \ref{eq:dwind} -- \ref{eq:dwind_init}.
+\end{remark}
+
+\begin{remark}
+As stated in equation \ref{eq:projection}, projecting the current velocity on the rotor plane is a simple matrix multiplication in base coordinates.
+\begin{align}
+\left( {_{BW}{\mathbf{R}}} \left({\dot{\mathbf{x}}} - {\E[\mathbf{w}]} \right) \right)^\perp = \begin{bmatrix}
+1 & 0 & 0 \\
+0 & 1 & 0 \\ 
+0 & 0 & 0
+\end{bmatrix}
+\end{align}
+\end{remark}
+
+\section{Linearized System}
+As two linear controllers are proposed, the system \ref{eq:states} -- \ref{eq:measurement} has to be linearized. However, if the translational dynamics are linearized around hovering straight away, the heading $\psi$ will be part of the dynamics explicitly.
+
+Instead, we will transform all states and disturbances into the orientation fixed coordinate frame $A$ described in \ref{sec:coordinates}. The state governing differential equations \ref{eq:state_diff} are adapted accordingly.
+
+Without having the heading in the linearized system equations we can cross it out from the control inputs. The wind's $z$-component only contributes in higher order terms and is thus also without influence in the linearized system.
+
+\begin{align}
+\mathbf{X}_A &= \begin{bmatrix}
+\frac{1}{8} \dot{\phi} & \phi & \frac{1}{8} \dot{\theta} & \theta & x_A & y_A & z_A & \dot{x}_A & \dot{y}_A & \dot{z}_A
+\end{bmatrix}^T & \text{(states)}  \\
+\mathbf{U}_A &= \begin{bmatrix}
+T_{ref} & \phi_{ref} & \theta_{ref} 
+\end{bmatrix}^T & \text{(inputs)} \\
+\mathbf{Y}_A &= \mathbf{X}_A & \text{(outputs)} \\
+\mathbf{W}_A &= \begin{bmatrix}
+w_{x,A} & w_{y,A} 
+\end{bmatrix}^T & \text{(disturbances)}
+\end{align}
+\begin{align}
+f_A\left(\mathbf{X}_A,\mathbf{U}_A,\mathbf{W}_A\right) &= \ddt \mathbf{X}_A  \\
+&= \begin{bmatrix}
+\mathbf{A}_\phi \begin{bmatrix}
+\frac{1}{8}\dot{\phi}(t) \\ \phi(t)
+\end{bmatrix}
++ \mathbf{B}_\phi \phi_{ref}(t) \\
+\mathbf{A}_\theta \begin{bmatrix}
+\frac{1}{8}\dot{\theta}(t) \\ \theta(t)
+\end{bmatrix}
++ \mathbf{B}_\theta \theta_{ref}(t) \\
+\dot{x}_A \\
+\dot{y}_A \\
+\dot{z}_A \\
+\frac{1}{m} \left( {_{BW}{\mathbf{R}}_y}^T {_{BW}{\mathbf{R}}_x}^T \left( \begin{bmatrix}
+0 \\ 0 \\ T_{ref}
+\end{bmatrix} 
+-    \left( {_{BW}{\mathbf{R}}_x} {_{BW}{\mathbf{R}}_y} \left({\dot{\mathbf{x}}}_A - {\E[\mathbf{w}_A]} \right) \right)^\perp \right) {C_D} {\displaystyle \sum_{i=1}^n {\omega_i}}\right) + \begin{bmatrix}
+0 \\ 0 \\ -g
+\end{bmatrix} 
+\end{bmatrix} \\
+g_A \left( \mathbf{X}_A,\mathbf{U}_A \right) &= \mathbf{X}
+\end{align}
+The states and disturbances are obtained by rotating them into the current heading direction.
+\begin{align}
+\mathbf{x}_A = {_{BW}{\mathbf{R}}_z} \cdot \mathbf{x} \\
+{\dot{\mathbf{x}}}_A = {_{BW}{\mathbf{R}}_z} \cdot \dot{\mathbf{x}} \\
+{\mathbf{w}}_A = {_{BW}{\mathbf{R}}_z} \cdot \mathbf{w}
+\end{align}
+
+The system above is now linearized around hovering by finding its partial derivatives with respect to the states, inputs and disturbances. 
+\begin{align}
+\dot{\mathbf{X}}_A &\approx \mathbf{A} \left( \mathbf{X}_A - \mathbf{X}_{A,ss} \right) + \mathbf{B} \left( \mathbf{U}_A - \mathbf{U}_{A,ss} \right) + \mathbf{B}_W \left( \mathbf{W}_A - \mathbf{W}_{A,ss} \right) \label{eq:lin_sys_dt}, \\
+\mathbf{Y} &= \mathbf{C} \left( \mathbf{X}_A - \mathbf{X}_{A,ss} \right) +  \mathbf{D} \left( \mathbf{U}_A - \mathbf{U}_{A,ss} \right)  +  \mathbf{D}_W \left( \mathbf{W}_A - \mathbf{W}_{A,ss} \right),
+\end{align}
+where
+\begin{align}
+\mathbf{A} &= \left.{\frac{\partial f_A}{\partial \mathbf{X}_A} \left( \mathbf{X}_A,\mathbf{U}_A, \mathbf{W}_A \right) }\right|_{\mathbf{X}_{A,ss}, \mathbf{U}_{A,ss}, \mathbf{W}_{A,ss}}, \\
+\mathbf{B} &= \left.{\frac{\partial f_A}{\partial \mathbf{U}_A} \left( \mathbf{X}_A,\mathbf{U}_A, \mathbf{W}_A \right) }\right|_{\mathbf{X}_{A,ss}, \mathbf{U}_{A,ss}, \mathbf{W}_{A,ss}}, \\
+\mathbf{B}_W &= \left.{\frac{\partial f_A}{\partial \mathbf{W}_A} \left( \mathbf{X}_A,\mathbf{U}_A, \mathbf{W}_A \right) }\right|_{\mathbf{X}_{A,ss}, \mathbf{U}_{A,ss}, \mathbf{W}_{A,ss}}, \\
+\mathbf{C} &= \left.{\frac{\partial g_A}{\partial \mathbf{X}_A} \left( \mathbf{X}_A,\mathbf{U}_A, \mathbf{W}_A \right) }\right|_{\mathbf{X}_{A,ss}, \mathbf{U}_{A,ss}, \mathbf{W}_{A,ss}}, \\
+\mathbf{D} &= \left.{\frac{\partial g_A}{\partial \mathbf{U}_A} \left( \mathbf{X}_A,\mathbf{U}_A, \mathbf{W}_A \right) }\right|_{\mathbf{X}_{A,ss}, \mathbf{U}_{A,ss}, \mathbf{W}_{A,ss}}, \\
+\mathbf{D}_W &= \left.{\frac{\partial g_A}{\partial \mathbf{W}_A} \left( \mathbf{X}_A,\mathbf{U}_A, \mathbf{W}_A \right) }\right|_{\mathbf{X}_{A,ss}, \mathbf{U}_{A,ss}, \mathbf{W}_{A,ss}} ,
+\end{align}
+and
+\begin{align}
+\mathbf{X}_{A,ss} &= \begin{bmatrix}
+0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0
+\end{bmatrix} ,\\
+\mathbf{U}_{A,ss} &= \begin{bmatrix}
+m \cdot g & 0 & 0
+\end{bmatrix} ,\\ 
+\mathbf{W}_{A,ss} &= \begin{bmatrix}
+0 & 0 
+\end{bmatrix}.
+\end{align}
+
+Eventually we obtain the state matrix $\mathbf{A} \in \mathbb{R}^{10\times10}$, input matrix $\mathbf{B} \in \mathbb{R}^{10\times3}$, disturbance input matrix $\mathbf{B}_W \in \mathbb{R}^{10\times2}$, output matrix $\mathbf{C} \in \mathbb{R}^{10\times10}$,  feedthrough matrix $\mathbf{D} \in \mathbb{R}^{10\times3}$ and disturbance feedthrough matrix  $\mathbf{D}_W \in \mathbb{R}^{10\times2}$. 
+
+One can see clearly that the drag force is counteracting the acceleration in $x$ and $y$ direction and how the wind is entering the system via the translational dynamics.
+%\begin{align}
+%\mathbf{A} &= \begin{bmatrix}
+%\onehalfsize{\begin{matrix}
+%\mathbf{A}_\phi & 0 \\
+%0 & \mathbf{A}_\theta
+%\end{matrix}} & \doublesize{0} & \doublesize{0} \\
+%\doublesize{0} & \doublesize{0} & \doublesize{\mathbf{I}_3}  \\
+%\begin{matrix}
+%0 & 0 & 0 & g \\
+%0 & -g & 0 & 0 \\
+%0 & 0 & 0 & 0
+%\end{matrix} & \doublesize{0} & \begin{matrix}
+% \frac{-C_D \cdot n \cdot \omega_{hover}}{m} & 0 & 0 \\
+% 0 & \frac{-C_D \cdot n \cdot \omega_{hover}}{m} & 0 \\
+% 0 & 0 & 0 
+%\end{matrix}
+%\end{bmatrix}
+%\end{align}
+\begin{align}
+A &= \begin{bmatrix}
+\mathbf{A}_{\phi,11} & \mathbf{A}_{\phi,12} & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+\mathbf{A}_{\phi,21} & \mathbf{A}_{\phi,22} & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+0 & 0 & \mathbf{A}_{\theta,11} & \mathbf{A}_{\theta,12} & 0 & 0 & 0 & 0 & 0 & 0  \\
+0 & 0 & \mathbf{A}_{\theta,21} & \mathbf{A}_{\theta,22} & 0 & 0 & 0 & 0 & 0 & 0  \\
+0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
+0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 \\
+0 & 0 & 0 & g & 0 & 0 & 0 & \frac{-C_D n \bar{\omega}}{m} & 0 & 0 \\
+0 & -g & 0 & 0 & 0 & 0 & 0 & 0 & \frac{-C_D n \bar{\omega}}{m} & 0 \\
+0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 
+\end{bmatrix} \\
+B &= \begin{bmatrix}
+0 & \mathbf{B}_{\phi,11} & 0 \\
+0 & \mathbf{B}_{\phi,21} & 0 \\
+0 & 0 & \mathbf{B}_{\theta,11} \\
+0 & 0 & \mathbf{B}_{\theta,21} \\
+0 & 0 & 0 \\
+0 & 0 & 0 \\
+0 & 0 & 0 \\
+0 & 0 & 0 \\
+0 & 0 & 0 \\
+\frac{1}{m} & 0 & 0
+\end{bmatrix} \\
+B_W &= \begin{bmatrix}
+0 & 0 \\
+0 & 0 \\
+0 & 0 \\
+0 & 0 \\
+0 & 0 \\
+0 & 0 \\
+0 & 0 \\
+\frac{C_D n \bar{\omega}}{m} & 0 \\
+0 & \frac{C_D n \bar{\omega}}{m} \\
+0 & 0
+\end{bmatrix} \\
+C &= \mathbf{I}_10 \\
+D &= \mathbf{0} \\
+D_W &= \mathbf{0}
+\end{align}
