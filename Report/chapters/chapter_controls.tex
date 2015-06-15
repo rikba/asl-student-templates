@@ -1,10 +1,10 @@
 \chapter{Controls}
 \label{sec:controls}
-The cascaded multirotor control with decoupled attitude and position control as depicted in figure \ref{pics:controller_sketch} is a popular structure. Both non-linear and linear control schemes have been proposed for this. These include integral backstepping, sliding mode, geometric control, PID control, learning control, mathematical optimization or combinations of these.
+The cascaded multirotor control with decoupled attitude and position control as depicted in figure \ref{pics:controller_sketch} is a popular structure. Both nonlinear and linear control schemes have been proposed for this. These include integral backstepping, sliding mode, geometric control, PID control, learning control, mathematical optimization or combinations of these.
 
 Bouabdallah formulated integral backstepping and sliding mode control \cite{Bouabdallah2005,Bouabdallah2007}. Lee developed a geometric tracking control \cite{Lee2010}. Hoffmann et. al. used PID control for their STARMAC quadrotor \cite{Hoffmann2007}. Robust $H_\infty$ control gives the ability guarantee stability even with model uncertainties. E.g. Felix Bergenkamp used Gaussian learning to determine uncertainty and then used $H_\infty$ to control a quadrotor \cite{Berkenkamp2014,www:robustquad}. Model predictive control schemes become more spread in multirotor control. Tzes, Nikolakopoulos and Alexis build a full linear MPC for a quadrotor \cite{Tzes2012}. Burri developed a decoupled MPC for position control \cite{Burri2012}. 
 
-We decide to go with the mathematical optimization techniques and will derive a LQR with integrator, a linear offset-free MPC and a non-linear MPC with integrator for general multirotor platforms. The algorithms will then be tested in the proposed MATLAB simulator and compared.
+We decide to go with the mathematical optimization techniques and will derive a LQR with integrator, a linear offset-free MPC and a nonlinear MPC with integrator for general multirotor platforms. The algorithms will then be tested in the proposed MATLAB simulator and compared.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % LQRI
@@ -47,6 +47,8 @@ r(k) &= \mathbf{r}_{\mathcal{O},ref}(k) \\
 \mathbf{0}_{3\times4} & \mathbf{I}_3 & \mathbf{0}_{3\times3}
 \end{bmatrix} 
 \end{align}
+An alternative approach could have been to linearize the system at every sample instant around the current state. However, this requires for the DARE to be solved at every instant. This is for example done at a high rate in rocket control by Cimen \cite{Cimen2008}.
+
 For reference tracking the error term $e(k)$ has to be minimized. This means, that we have to penalize it in the cost function. Because we want a fast response, we do not penalize the other states. On the other hand, we will apply some weight to the inputs in order to fulfill the criterion $\mathbf{R}\succ0$ and bound the inputs. Hence, after some adjustment, the following weighting matrices $\mathbf{Q} \in \mathbb{R}^{13\times13}$ and $\mathbf{R} \in \mathbb{R}^{3\times3}$ have been chosen for the Firefly. 
 \begin{align}
 \mathbf{Q} &= \begin{bmatrix}
@@ -157,7 +159,7 @@ u(t) \\ \hat{w}(t)
 L C x(t) \label{eq:mpc_obsv_update}
 \end{align}
 
-The observer gain $L$ is computed offline using regular pole placement methods for the system. Here, this is done using MATLAB's \texttt{place} command. The dual of the closed-loop feedback problem is described by the observer error dynamics \ref{eq:mpc_obsv_err} of the augmented system, which has to be observable. The poles are chosen, such that they are around ten times faster than the fastest system dynamics. This may make the system sensible to measurement noise. 
+The observer gain $L$ is computed offline using regular pole placement methods for the system. Here, this is done using MATLAB's \texttt{place} command. The dual of the closed-loop feedback problem is described by the observer error dynamics \ref{eq:mpc_obsv_err} of the augmented system, which has to be observable. The poles are chosen, such that they are around ten times faster than the fastest system dynamics ($\approx 60\si{\radian\per\second}$). This may make the system sensible to measurement noise. 
 \begin{align}
 \begin{bmatrix}
 A & B_d \\
@@ -172,15 +174,15 @@ C & C_d
 For the proposed offset-free MPC to work, we pick $n_d$, the number of disturbances, equal to the number of outputs $n_y$. According to Maeder \cite{Maeder2009}, the augmented system \ref{eq:MPC_dt} is observable if and only if $(C,A)$ observable and
 \begin{align}
 \det \begin{bmatrix}
-A-I & Bd \\ C & I 
-\end{bmatrix}. \label{eq:mpc_obsv_cond}
+A-I & B_d \\ C & I 
+\end{bmatrix} = det(A-I-B_dC) \neq 0 \label{eq:mpc_obsv_cond}
 \end{align}
 
 \subsection{Implementation}
 The MPC can be summarized in the following steps:
 \begin{enumerate}
 \item initialization: compute offline $P$, $L$, $M^{-1}$
-\item repeat for every sample time
+\item repeat at every sample time
 \begin{enumerate}
 \item update state and disturbance estimation \ref{eq:mpc_obsv_update} \label{enum:mpc_start}
 \item calculate $N$ desired steady-state inputs and states \ref{eq:steady_state_ls}
@@ -192,18 +194,77 @@ The MPC can be summarized in the following steps:
 \subsubsection{Solver}
 The optimization problem \ref{eq:mpc_opti} is the computationally limiting part in MPC, as a convex optimization problem has to be solved. One can handle this problem by explicitly solving \ref{eq:mpc_opti} for various constraint and state combinations and looking up the control law, which is piecewise affine. Another solution is online optimization, which we choose.
 
-Convex optimization problems can be solved very efficiently using the code generation software for convex optimization CVXGEN by Mattingley and and Boyd \cite{Mattingley2010}. One can simply formulate the problem similar to \ref{eq:mpc_opti} in the CVXGEN interface. The software then automatically generates c-code and a MATLAB MEX interface with the solver. This solver then can be called from within MATLAB using \texttt{csolve}.   
+Convex optimization problems can be solved very efficiently using the code generation software for convex optimization CVXGEN by Mattingley and and Boyd \cite{Mattingley2010}. One can simply formulate the problem similar to \ref{eq:mpc_opti} in the CVXGEN interface. The software then automatically generates c-code and a MATLAB MEX interface with the solver. This solver then can be called from within MATLAB using \texttt{csolve}.
+
+The code for generating the solver is displayed in figure \ref{fig:cvxgen}. The dimensions and the prediction horizon have to be fixed. For the proposed linear system \ref{eq:lin_sys_dt}, we have $n_x=n_d=10$ states and disturbances, $n_u=3$ control inputs and $n_w=2$ wind inputs. The number of states, control inputs, prediction horizon and constraints determines the size of the optimization problem. We choose a prediction horizon of $N=20$. For larger horizons, the program becomes too large and the computation time exceeds the limits. All other parameters can be passed to the solver before calling \texttt{csolve}.
 \begin{figure}
 \centering
 \input{algorithms/cvxgen.tex}
 \caption{CVXGEN code}
+\label{fig:cvxgen}
 \end{figure}
 \subsubsection{System Matrices}
+As for the LQRI, we consider the heading free linear system \ref{eq:lin_sys_dt}. We discretized our model (denoted by a bar) and assign it to the above defined MPC state-space system \ref{eq:MPC_dt}. Again notice, that the position and velocity in the state and the reference need to be converted into orientation-fixed frame. 
+\begin{align}
+A & = \discrete{\mathbf{A}} \\
+B & = \discrete{\mathbf{B}} \\
+B_w & = \discrete{\mathbf{B}}_w \\
+C & = \discrete{\mathbf{C}} \\
+x_k &= \mathbf{x}_{\mathcal{O},k} - \mathbf{x}_{\mathcal{O},ss}  \\
+u_k &= \mathbf{u}_{\mathcal{O},k} - \mathbf{u}_{\mathcal{O},ss}  \\
+u_k &= \mathbf{y}_{\mathcal{O},k} - \mathbf{y}_{\mathcal{O},ss}  \\
+r_k &= \begin{bmatrix}
+\mathbf{r}_{\mathcal{O},ref,k} \\
+\mathbf{v}_{\mathcal{O},ref,k}
+\end{bmatrix}
+\end{align}
+
+The MPC will have position and velocity tracking capabilities. Thus we choose the matrix $H$ accordingly.
+\begin{align}
+H &= \begin{bmatrix}
+\mathbf{0}_{6\times4} & \mathbf{I}_6 
+\end{bmatrix} 
+\end{align}
 \subsubsection{Weights}
+Weighting the cost function has been done iteratively, simulating step experiments and adjusting the weights until a desired performance was achieved.
 \subsubsection{Disturbance Model}
+As Maeder states in \cite{Maeder2009}, the simplest way to achieve offset-free control is to set the number of disturbances equal the number of outputs, $n_d=n_y=10$. The disturbance matrices $B_d$ and $C_d$ then have to be chosen such that \ref{eq:mpc_obsv_cond} holds.
+
+A common way is to model the disturbance as output disturbance with $C_d=\mathbf{I}$ and $B_d= \mathbf{0}$. However, this is only possible, if the plant has no integrators, which our plant has.
+
+Therefore we model the disturbance as simple input disturbance.
+\begin{align}
+B_d = \mathbf{I}_{10} \\
+C_d = \mathbf{0}_{10\times10}
+\end{align}
+Physically, this means, we have disturbance accelerations (forces and moments) and velocities acting on the system, which we estimate and which the controller then can compensate.
 \subsubsection{Constraints}
+MPC has the great advantage to consider constraints on inputs and states explicitly in the problem formulation. One could for example use this feature for obstacle avoidance.
+
+We will only use input constraints. For one thing, we want to keep the attitude bounded, such that it does not diverge too much from the linearization point or gets into regions of singular Euler angles. And for another, we limit the thrust within the capable regions given by the motors (see equations \ref{eq:T_min} and \ref{eq:T_max}.
+
+\begin{align}
+T_{min} \leq T_{ref} \leq T_{max} \\
+\si{-30}{\degree} \leq \phi_{ref} \leq \si{30}{\degree} \\
+\si{-30}{\degree} \leq \theta_{ref} \leq \si{30}{\degree}
+\end{align}
+
+\section{Simulation Results}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % NMPC
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{NMPC} 
+Nonlinear MPC has the same principle as linear MPC. At every time step, a finite horizon open-loop optimal control problem is solved. The first input of the optimal input is applied to the system until the next sampling instant. Then the next finite horizon open-loop optimal control problem is solved.
+
+Like MPC, NMPC can handle constraint systems, allowing the controller to push the system to the limits. Also, NMPC is naturally feed-forwarding, as it predicts the system states into the future and finds control inputs given this knowledge. 
+
+Unlike MPC, however, the solution of the optimal control problem is not necessarily globally optimal. While linear MPC uses the advantages of convex optimization, the nonlinear counterpart is prone to local minima. Besides, guaranteeing stability for NMPC is more difficult. 
+
+An introduction to the topic can be found in Allgöwer and Johansen \cite{Allgower2004,Johansen2011}. More advanced strategies and future outlooks can be found in Findeisen's, Allgöwer's and Biegler's lecture notes on NMPC \cite{Findeisen2007}.
+
+We will derive a potentially simple reference-tracking offset-free controller for the nonlinear dynamics proposed in the state equations \ref{eq:state_diff}. For guidance and code generation we used the open-source ACADO toolbox written by Diehl, Ferreau, Houska, Vukov and others \cite{Houska2011,Vukov2013}.
+
+Although Fontes \cite{Fontes2001} provides a technique to guarantee closed-loop stability, our controller will have no proof on stability. The approach by Fontes relies on finding a terminal penalty and terminal region such that a Lyapunov function can be found, that guarantees stability. We instead totally rely on a range of simulations. 
+
+\subsection{Problem Formulation}

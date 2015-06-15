@@ -442,8 +442,8 @@ T_{ref} &\in \{T_{min},T_{max}\} \\
 \end{align}
 with
 \begin{align}
-T_{min} &= n \cdot \omega_{min}^2 \cdot C_T =  \num{9.2e-4} \si{\newton} ,\\
-T_{max} &= n \cdot \omega_{max}^2 \cdot C_T =  \num{36.8}\si{\newton} .\\
+T_{min} &= n \cdot \omega_{min}^2 \cdot C_T =  \num{9.2e-4} \si{\newton} , \label{eq:T_min}\\
+T_{max} &= n \cdot \omega_{max}^2 \cdot C_T =  \num{36.8}\si{\newton} .\label{eq:T_max}\\
 \end{align}
 The first period has been dismissed to remove transients and the data detrended.
 
@@ -464,7 +464,7 @@ The first period has been dismissed to remove transients and the data detrended.
 Evaluating the experiments the four transfer functions functions for thrust, roll, pitch and yaw have been found.
 
 \subsubsection{Thrust Dynamics}
-The thrust response $G_{T_{ref} \rightarrow T}$ has been identified as a first order system (equation \ref{eq:tf_T}). The time constant of the system ($0.016 \si{\second}$) lies in between the motor up and down time constants ($0.0125 \si{\second} / 0.025 \si{\second}$) specified by the non-linear motor system in equation \ref{eq:motor_model}.
+The thrust response $G_{T_{ref} \rightarrow T}$ has been identified as a first order system (equation \ref{eq:tf_T}). The time constant of the system ($0.016 \si{\second}$) lies in between the motor up and down time constants ($0.0125 \si{\second} / 0.025 \si{\second}$) specified by the nonlinear motor system in equation \ref{eq:motor_model}.
 \begin{align}
 G_{T_{ref} \rightarrow T}(s) &= \frac{41}{s+62} \label{eq:tf_T}
 \end{align}
@@ -629,7 +629,7 @@ Still both identifications show similar behavior in terms of system order and re
 % System Formulation
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{System Formulation}
-Having all necessary components modeled we can state the complete non-linear model to be controlled. The translational dynamics are to be modeled by the motions of equations stated in the Newton's equations \ref{eq:newton}. The other dynamics, i.e. attitude control, allocation mapping and motor response are modeled as the black box model described in in the system identification section \ref{sec:sys_id}. The overall system is scratched in figure \ref{pics:control_system}.
+Having all necessary components modeled we can state the complete nonlinear model to be controlled. The translational dynamics are to be modeled by the motions of equations stated in the Newton's equations \ref{eq:newton}. The other dynamics, i.e. attitude control, allocation mapping and motor response are modeled as the black box model described in in the system identification section \ref{sec:sys_id}. The overall system is scratched in figure \ref{pics:control_system}.
 
 \begin{figure}
 \centering

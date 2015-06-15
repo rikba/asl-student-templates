@@ -17,6 +17,7 @@
 \State $r \gets \Call{transformWorld2Orientation}{x.heading,r}$
 \State $u \gets K \cdot [x;e]$
 \State $u.thrust\gets u.thrust + m \cdot g$
+\State $u.yaw\gets r.yaw$
 \State $e \gets e + Ts \cdot (r - x) $
 \State \Return $u,e$
 \EndProcedure
