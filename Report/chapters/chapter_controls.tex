@@ -86,13 +86,21 @@ Model predictive control is an effective control technique to deal with multivar
 The main advantage of model predictive control is the incorporation of constraints on inputs and states. This allows you to push the system to the limits and thus a fast control. Second, due to its predictive nature, the controller has automatic feed-forward behavior. Given the problem is convex, e.g. linear system, quadratic cost and box constraints, very efficient solvers are available and the solution is optimal with respect to the formulation. Additionally linear MPC has some advances in theory, like stability guarantees and offset-free control.
 
 \subsection{Problem Formulation}
-We will present an offset-free, reference tracking, linear MPC scheme. Steady-state offset-free control is achieved by augmenting the state dynamics with a constant disturbance as proposed by Pannocchia and Rawlings and extended by Maeder \cite{Pannocchia2003a,Maeder2009}. The disturbance is estimated using a Luenberger Observer. Reference tracking is done by finding steady-state inputs and states, that are sufficient to meet the control target. The optimization will then try to find a control input to minimize the distance between the states and inputs and their corresponding steady-state value. We choose a quadratic cost. 
+We will present an offset-free, reference tracking, linear MPC scheme. Steady-state offset-free control for constant references is achieved by augmenting the state dynamics with a constant disturbance as proposed by Pannocchia and Rawlings and extended by Maeder \cite{Pannocchia2003a,Maeder2009}. The disturbance is estimated using a Luenberger Observer. Reference tracking is done by finding steady-state inputs and states, that are sufficient to meet the control target. The optimization will then try to find a control input to minimize the distance between the states and inputs and their corresponding steady-state value. We choose a quadratic cost function. Note that all systems in this section are discrete time. 
+
+Augmenting the system with input and ouput disturbances $d_k$ and tracked measurement outputs $z_k$ we obtain an extended state-space model. The dimensions are $x\in\mathbb{R}^{n_x}$, $u\in\mathbb{R}^{n_u}$, $d\in\mathbb{R}^{n_d}$, $y\in\mathbb{R}^{n_y}$ and $z\in\mathbb{R}^{n_z}$.
+\begin{align}
+x_{k+1} &= A x_k + B u_k + B_w w_k + B_d d_k \label{eq:MPC_dt}\\
+d_{k+1} &= d_k \nonumber \\ 
+y_{k} &= C x_k + C_d d_k \nonumber \\
+z_k &= H y_k 
+\end{align}
 
 For our multirotor the open-loop optimal control problem formulates as following:
 
 \begin{align}
 &\min_{u(0),u(1),\ldots,u(N)}
-& & ||x_N-\bar{x}_t||_P^2 + \sum_{k=0}^{N-1} ||x_k - \bar{x}_t||_Q^2 + ||u_k - \bar{u}_t||_R^2  \\
+& & ||x_N-\bar{x}_t||_P^2 + \sum_{k=0}^{N-1} ||x_k - \bar{x}_t||_Q^2 + ||u_k - \bar{u}_t||_R^2  \label{eq:mpc_opti}\\
 & \text{s.t.} 
 & & x_{k+1} = A x_k + B u_k + B_w w_k + B_d d_k, & k = 0, \ldots, N-1 \nonumber\\
 & & & w_{k+1} = w_k  & k = 0, \ldots, N-1 \nonumber\\
@@ -102,8 +110,98 @@ For our multirotor the open-loop optimal control problem formulates as following
 & & & x_0 = \hat x (t), \; d_0 = \hat d(t), \; w_0 = \hat w(t) \nonumber
 \end{align}
 
-The steady-state targets $\bar{x}_t$ and $\bar{u}_t$ 
+As in the LQRI, we require $Q\succeq$, $P\succeq$ and $R\succ0$. We will choose $P$ to solve the Riccati equation. This mimics unconstrained infinite horizon control at the end of the horizon and guarantees stability for the closed-loop linear system, if the terminal set is invariant.
+
+The steady-state targets $\bar{x}_t$ and $\bar{u}_t$ are calculated at every sampling time $t$, if possible for all $N$ future reference points. They are the solution of the following least-squares problem, which is established by solving system \ref{eq:MPC_dt} for $x_{k+1}=x_k=\bar{x}_t$, $u_k = \bar{u}_t$ and $z_k = r(t)$ with $r(t)$ being the current reference position and velocity. The inverse of the left-hand side matrix $M^{-1}$ can be obtained offline.
+\begin{align}
+\underbrace{\begin{bmatrix}
+A-I & B \\
+HC & 0 
+\end{bmatrix}}_{M:=}
+\begin{bmatrix}
+\bar{x}_t \\
+\bar{u}_t
+\end{bmatrix}
+=
+\begin{bmatrix}
+-B_w \hat{w}(t) - B_d \hat{d}(t)\\
+r(t) - H C_d \hat{d}(t) \label{eq:steady_state_ls}
+\end{bmatrix}
+\end{align}
+$\hat{w}(t)$ is the wind velocity vector estimated at the current time sample. $\hat{d}(t)$ and $\hat x (t)$ are the currently estimated disturbances and analogous estimated states. The estimator is a Luenberger observer, estimating the disturbance and state at every sample time. Instead, for example a Kalman filter could have been applied as well. The estimator is updated using the following equation. $u(t)$ is the previously calculated optimal control input. $x(t)$ is the currently measured state.
+\begin{align}
+\begin{bmatrix}
+\hat{x}(t+1) \\ \hat{d}(t+1)
+\end{bmatrix}
+&=\left(
+\begin{bmatrix}
+A & B_d \\
+0 & I
+\end{bmatrix}
+- L
+\begin{bmatrix}
+C & C_d
+\end{bmatrix}
+\right) \begin{bmatrix}
+\hat{x}(t) \\ \hat{d}(t)
+\end{bmatrix}
++
+\begin{bmatrix}
+B & B_w \\
+0 & 0
+\end{bmatrix}
+\begin{bmatrix}
+u(t) \\ \hat{w}(t)
+\end{bmatrix}
++
+L C x(t) \label{eq:mpc_obsv_update}
+\end{align}
+
+The observer gain $L$ is computed offline using regular pole placement methods for the system. Here, this is done using MATLAB's \texttt{place} command. The dual of the closed-loop feedback problem is described by the observer error dynamics \ref{eq:mpc_obsv_err} of the augmented system, which has to be observable. The poles are chosen, such that they are around ten times faster than the fastest system dynamics. This may make the system sensible to measurement noise. 
+\begin{align}
+\begin{bmatrix}
+A & B_d \\
+0 & I
+\end{bmatrix}
+- L
+\begin{bmatrix}
+C & C_d
+\end{bmatrix} \label{eq:mpc_obsv_err}
+\end{align}
+
+For the proposed offset-free MPC to work, we pick $n_d$, the number of disturbances, equal to the number of outputs $n_y$. According to Maeder \cite{Maeder2009}, the augmented system \ref{eq:MPC_dt} is observable if and only if $(C,A)$ observable and
+\begin{align}
+\det \begin{bmatrix}
+A-I & Bd \\ C & I 
+\end{bmatrix}. \label{eq:mpc_obsv_cond}
+\end{align}
+
 \subsection{Implementation}
+The MPC can be summarized in the following steps:
+\begin{enumerate}
+\item initialization: compute offline $P$, $L$, $M^{-1}$
+\item repeat for every sample time
+\begin{enumerate}
+\item update state and disturbance estimation \ref{eq:mpc_obsv_update} \label{enum:mpc_start}
+\item calculate $N$ desired steady-state inputs and states \ref{eq:steady_state_ls}
+\item solve optimization problem \ref{eq:mpc_opti}
+\item apply first control input to system \label{enum:mpc_finish}
+\end{enumerate}
+\end{enumerate}
+
+\subsubsection{Solver}
+The optimization problem \ref{eq:mpc_opti} is the computationally limiting part in MPC, as a convex optimization problem has to be solved. One can handle this problem by explicitly solving \ref{eq:mpc_opti} for various constraint and state combinations and looking up the control law, which is piecewise affine. Another solution is online optimization, which we choose.
+
+Convex optimization problems can be solved very efficiently using the code generation software for convex optimization CVXGEN by Mattingley and and Boyd \cite{Mattingley2010}. One can simply formulate the problem similar to \ref{eq:mpc_opti} in the CVXGEN interface. The software then automatically generates c-code and a MATLAB MEX interface with the solver. This solver then can be called from within MATLAB using \texttt{csolve}.   
+\begin{figure}
+\centering
+\input{algorithms/cvxgen.tex}
+\caption{CVXGEN code}
+\end{figure}
+\subsubsection{System Matrices}
+\subsubsection{Weights}
+\subsubsection{Disturbance Model}
+\subsubsection{Constraints}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % NMPC

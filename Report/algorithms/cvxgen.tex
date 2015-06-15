@@ -1,0 +1,47 @@
+\fbox {
+    \parbox{\textwidth}{
+\begin{tabbing}
+\= {\tt\pdefblock{dimensions}} \\
+  \> {\tt ~~\pdefidentifier{n\_u}~\pdefequals{=}~\pdefvalue{3}~~~\pdefcomment{\# inputs}} \\
+  \> {\tt ~~\pdefidentifier{n\_x}~\pdefequals{=}~\pdefvalue{10}~~\pdefcomment{\# states}} \\
+  \> {\tt ~~\pdefidentifier{n\_d}~\pdefequals{=}~\pdefvalue{10}~~\pdefcomment{\# constant disturbances}} \\
+  \> {\tt ~~\pdefidentifier{n\_w}~\pdefequals{=}~\pdefvalue{2}~~~\pdefcomment{\# wind disturbances (x,y)}} \\
+  \> {\tt ~~\pdefidentifier{N}~\pdefequals{=}~\pdefvalue{20}~~~~\pdefcomment{\# horizon  }} \\
+  \> {\tt \pdefblock{end}} \\
+  \> {\tt } \\
+  \> {\tt \pdefblock{parameters}} \\
+  \> {\tt ~~\pdefidentifier{A}~\pdefdim{(n\_x,n\_x)}~~~~~~~~~~~~~~~~\pdefcomment{\# dynamics matrix}} \\
+  \> {\tt ~~\pdefidentifier{B}~\pdefdim{(n\_x,n\_u)}~~~~~~~~~~~~~~~~\pdefcomment{\# transfer matrix}} \\
+  \> {\tt ~~\pdefidentifier{Bd}~\pdefdim{(n\_x,n\_d)}~~~~~~~~~~~~~~~\pdefcomment{\# disturbance transfer matrix}} \\
+  \> {\tt ~~\pdefidentifier{Bw}~\pdefdim{(n\_x,n\_w)}~~~~~~~~~~~~~~~\pdefcomment{\# wind transfer matrix}} \\
+  \> {\tt ~~\pdefidentifier{Q}~\pdefdim{(n\_x,n\_x)}~\pdefattr{diagonal}~\pdefattr{psd}~~~\pdefcomment{\# state cost}} \\
+  \> {\tt ~~\pdefidentifier{Q\_final}~\pdefdim{(n\_x,n\_x)}~\pdefattr{psd}~~~~~~\pdefcomment{\# final state cost}} \\
+  \> {\tt ~~\pdefidentifier{R}~\pdefdim{(n\_u,n\_u)}~\pdefattr{diagonal}~\pdefattr{psd}~~~\pdefcomment{\# input cost}} \\
+  \> {\tt ~~\pdefidentifier{x}\pdefbrackets{[0]}~\pdefdim{(n\_x)}~~~~~~~~~~~~~~~~~\pdefcomment{\# initial state}} \\
+  \> {\tt ~~\pdefidentifier{u\_max}~\pdefdim{(n\_u)}~~~~~~~~~~~~~~~~\pdefcomment{\# upper input constraints}} \\
+  \> {\tt ~~\pdefidentifier{u\_min}~\pdefdim{(n\_u)}~~~~~~~~~~~~~~~~\pdefcomment{\# lower input constraints}} \\
+  \> {\tt ~~\pdefidentifier{x\_ss}~\pdefdim{(n\_x)}~~~~~~~~~~~~~~~~~\pdefcomment{\# desired state at steady state}} \\
+  \> {\tt ~~\pdefidentifier{u\_ss}~\pdefdim{(n\_u)}~~~~~~~~~~~~~~~~~\pdefcomment{\# desired input at steady state}} \\
+  \> {\tt ~~\pdefidentifier{d}~\pdefdim{(n\_d)}~~~~~~~~~~~~~~~~~~~~\pdefcomment{\# estimated constant disturbances}} \\
+  \> {\tt ~~\pdefidentifier{w}~\pdefdim{(n\_w)}~~~~~~~~~~~~~~~~~~~~\pdefcomment{\# estimated constant wind}} \\
+  \> {\tt \pdefblock{end}} \\
+  \> {\tt } \\
+  \> {\tt \pdefblock{variables}} \\
+  \> {\tt ~~\pdefidentifier{x}\pdefbrackets{[t]}~~\pdefdim{(n\_x)}\pdefindex{, t=1..N+1}~~\pdefcomment{\# state}} \\
+  \> {\tt ~~\pdefidentifier{u}\pdefbrackets{[t]}~~\pdefdim{(n\_u)}\pdefindex{, t=0..N}~~~~\pdefcomment{\# input}} \\
+  \> {\tt \pdefblock{end}} \\
+  \> {\tt } \\
+  \> {\tt \pdefblock{minimize}} \\
+  \> {\tt ~~\pdeffunction{sum}\pdefindex{[t=0..N]}\pdeffunction{(}\pdeffunction{quad(}\pdefidentifier{x}\pdefbrackets{[t]}-\pdefidentifier{x\_ss},~\pdefidentifier{Q}\pdeffunction{)}~+~\pdeffunction{quad(}\pdefidentifier{u}\pdefbrackets{[t]}~-~\pdefidentifier{u\_ss},~\pdefidentifier{R}\pdeffunction{)}\pdeffunction{)}} \\
+  \> {~~+~\pdeffunction{quad(}\pdefidentifier{x}\pdefbrackets{[N+1]}-\pdefidentifier{x\_ss},~\pdefidentifier{Q\_final}\pdeffunction{)}} \\
+  \> {\tt \pdefblock{subject to}} \\
+  \> {\tt ~~\pdefcomment{\# dynamics constraints}} \\
+  \> {\tt ~~\pdefidentifier{x}\pdefbrackets{[t+1]}~\pdefconstrsign{==}~\pdefidentifier{A}*\pdefidentifier{x}\pdefbrackets{[t]}~+~\pdefidentifier{B}*\pdefidentifier{u}\pdefbrackets{[t]}~+~\pdefidentifier{Bw}*\pdefidentifier{w}~+~\pdefidentifier{Bd}*\pdefidentifier{d}\pdefindex{, t=0..N}} \\
+  \> {\tt ~~\pdefcomment{\# upper input constaint halfspace  }} \\
+  \> {\tt ~~\pdefidentifier{u}\pdefbrackets{[t]}~\pdefconstrsign{<=}~\pdefidentifier{u\_max}\pdefindex{, t=0..N}} \\
+  \> {\tt ~~\pdefcomment{\# lower input constraint halfspace  }} \\
+  \> {\tt ~~\pdefidentifier{u}\pdefbrackets{[t]}~\pdefconstrsign{>=}~\pdefidentifier{u\_min}\pdefindex{, t=0..N}} \\
+  \> {\tt \pdefblock{end}}
+\end{tabbing}
+}
+}
