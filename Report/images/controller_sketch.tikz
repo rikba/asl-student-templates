@@ -20,7 +20,7 @@
 \node[draw, minimum width=1.5cm, minimum height=1.75cm, anchor=south west, text width=1.5cm, align=center] (D) at (LLD) {MAV\\Dynamics};
 
 % edges
-\draw[->] (in1) -- node[above] {$\mathbf{x}_{ref}$} (A.180);
+\draw[->] (in1) -- node[above] {$\mathbf{r}_{ref}$} (A.180);
 
 \draw[->] ($(A.0) + (0,0.5)$) -- node[above] {$T_{ref}$} ($(C.180) + (0,1.25/2)$);
 \draw[->] (A.0) -- node[above] {$\phi_{ref}$} ($(B.180) + (0,0.75)$);

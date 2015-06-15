@@ -1,2 +1,111 @@
 \chapter{Controls}
 \label{sec:controls}
+The cascaded multirotor control with decoupled attitude and position control as depicted in figure \ref{pics:controller_sketch} is a popular structure. Both non-linear and linear control schemes have been proposed for this. These include integral backstepping, sliding mode, geometric control, PID control, learning control, mathematical optimization or combinations of these.
+
+Bouabdallah formulated integral backstepping and sliding mode control \cite{Bouabdallah2005,Bouabdallah2007}. Lee developed a geometric tracking control \cite{Lee2010}. Hoffmann et. al. used PID control for their STARMAC quadrotor \cite{Hoffmann2007}. Robust $H_\infty$ control gives the ability guarantee stability even with model uncertainties. E.g. Felix Bergenkamp used Gaussian learning to determine uncertainty and then used $H_\infty$ to control a quadrotor \cite{Berkenkamp2014,www:robustquad}. Model predictive control schemes become more spread in multirotor control. Tzes, Nikolakopoulos and Alexis build a full linear MPC for a quadrotor \cite{Tzes2012}. Burri developed a decoupled MPC for position control \cite{Burri2012}. 
+
+We decide to go with the mathematical optimization techniques and will derive a LQR with integrator, a linear offset-free MPC and a non-linear MPC with integrator for general multirotor platforms. The algorithms will then be tested in the proposed MATLAB simulator and compared.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% LQRI
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{LQRI} 
+LQR is a mathematical optimization based control technique for linear control systems with quadratic cost functions. The controller is straight forward to tune, easy applicable for multiple input multiple output (MIMO), guarantees stability for the given linearized system and is optimal with respect to the system representation and cost function. Further, the gain matrix $\mathbf{K}$ can be computed offline, such that applying the control law reduces to a simple matrix multiplication.
+
+\subsection{Problem Formulation}
+Given a discrete-time linear system with infinite-time quadratic cost
+\begin{align}
+x(k+1) &= \mathbf{A}x(k) + \mathbf{B}u(k) \label{eq:lqr_system_x}\\
+J(u(0),u(1),...,u(\infty)) &= \sum_{k=0}^\infty  x(k)^T\mathbf{Q}x(k) + u(k)^T\mathbf{R}u(k) \label{eq:lqr_system_J}
+\end{align} 
+with $(\mathbf{A},\mathbf{B})$ stabilizable, $(\mathbf{A},\mathbf{G})$ with $\mathbf{Q}= \mathbf{G} \mathbf{G}^T$ controllable, weighting matrices $\mathbf{R}\succ0$ positive definite and $\mathbf{Q}\succeq0$ positive semi-definite, one can find a unique, stabilizing, linear state-feedback control law $u(k) = -\mathbf{K} x(k)$, that minimizes the quadratic cost.
+This law is found solving the discrete-time algebraic Riccati equation for $x$.
+\begin{align}
+\mathbf{A}^Tx\mathbf{A} - x - \mathbf{A}^T x \mathbf{B} \left( \mathbf{B}^T x \mathbf{B} + \mathbf{R} \right)^{-1} \mathbf{B}^T x \mathbf{A} + \mathbf{Q} = 0 \\
+\mathbf{K} = \left( \mathbf{B}^T x \mathbf{B} + \mathbf{R} \right)^{-1} \mathbf{B}^T x \mathbf{A}
+\end{align}
+
+For offset-free reference tracking the system \ref{eq:lqr_system_x} can be augmented by an integrator state $e$.
+\begin{align}
+e(k+1) = e(k) + {T_s} \left( r(k) - \mathbf{H}x(k) \right) \label{eq:lqr_system_e}
+\end{align}
+$r(k)$ is the reference to be tracked, $\mathbf{H}x(k)$ is the corresponding state and $T_s$ is the sampling time.
+
+More details on LQR/LQRI control, the solution of the algebraic Riccati equation, stability and tuning can be obtained in Anderson and Moore \cite{Anderson2007}.
+
+\subsection{Implementation}
+Having set up the linear state-space model \ref{eq:lin_sys_dt}--\ref{eq:lin_sys_y}, the LQRI formulation is almost obtained. The system has to be discretized (denoted with a bar) with respect the position control sampling time $Ts=0.01\si{\second}$ and augmented with an integrator state .We will not model the effects of wind. Here, the integrator has to compensate offsets due to wind. 
+
+In the general equations \ref{eq:lqr_system_x}, \ref{eq:lqr_system_J}, \ref{eq:lqr_system_e} we substitute the variables from our multirotor problem derived in the modeling section \ref{sec:modeling}.
+\begin{align}
+\mathbf{A} & = \discrete{\mathbf{A}} \\
+\mathbf{B} & = \discrete{\mathbf{B}} \\
+x(k) &= \orientation{\mathbf{x}}(k) - \mathbf{x}_{\mathcal{O},ss}  \\
+u(k) &= \orientation{\mathbf{u}}(k) - \mathbf{u}_{\mathcal{O},ss} \label{eq:lqri_u}\\
+r(k) &= \mathbf{r}_{\mathcal{O},ref}(k) \\
+\mathbf{H} &= \begin{bmatrix}
+\mathbf{0}_{3\times4} & \mathbf{I}_3 & \mathbf{0}_{3\times3}
+\end{bmatrix} 
+\end{align}
+For reference tracking the error term $e(k)$ has to be minimized. This means, that we have to penalize it in the cost function. Because we want a fast response, we do not penalize the other states. On the other hand, we will apply some weight to the inputs in order to fulfill the criterion $\mathbf{R}\succ0$ and bound the inputs. Hence, after some adjustment, the following weighting matrices $\mathbf{Q} \in \mathbb{R}^{13\times13}$ and $\mathbf{R} \in \mathbb{R}^{3\times3}$ have been chosen for the Firefly. 
+\begin{align}
+\mathbf{Q} &= \begin{bmatrix}
+\mathbf{0}_{10\times10} & \mathbf{0}_{10\times3} \\
+\mathbf{0}_{3\times10} & \mathbf{I}_{3} 
+\end{bmatrix} \\
+\mathbf{R} &= \begin{bmatrix}
+0.01 & 0 & 0 \\
+0 & 0.03 & 0 \\
+0 & 0 & 0.03
+\end{bmatrix}
+\end{align}
+
+%\begin{align}
+%\orientation{\mathbf{x}}(k+1) &= \discrete{\mathbf{A}} \orientation{\mathbf{x}}(k) + \discrete{\mathbf{B}} \orientation{\mathbf{u}}(k) \\
+%\mathbf{e}(k+1) &= \mathbf{e}(k) + T_s \left( \mathbf{r}_{\mathcal{O},ref}(k) - \mathbf{H}\orientation{\mathbf{x}}(k) \right) \\
+%\mathbf{H} &= \begin{bmatrix}
+%\mathbf{0}_{3\times4} & \mathbf{I}_3 & \mathbf{0}_{3\times3} \\
+%J &= \sum_{k=0}^\infty  x(k)^T\mathbf{Q}x(k) + u(k)^T\mathbf{R}u(k)
+%\end{bmatrix}
+%\end{align}
+
+The proposed LQRI controller has been implemented in MATLAB. The controller gain matrix $\mathbf{K}$ is found using the function \texttt{lqi}, which takes as arguments the system equations and weighting matrices and solves the discrete algebraic Riccati equation (DARE). The gain needs to be established only once in the initialization. While the controller is running, the control input is found via
+\begin{align}
+u(k) = \mathbf{K} x(k).
+\end{align}
+
+Since the position and velocity state estimations and reference position come in world-coordinates from the sensor fusion, these have to be transformed to orientation-fixed frame first, before applying the control law. Also the control input, which is according to the formulation \ref{eq:lqri_u} relative to the hovering input, needs to be transformed, before returning it to the system. Algorithm \ref{alg:lqri} illustrates the described simulation.
+\input{algorithms/lqri_control.tex}
+\subsection{Simulation Results}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% MPC
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{MPC} 
+Model predictive control is an effective control technique to deal with multivariable constraint control problems. Instead of solving an infinite horizon optimal control problem like LQR, MPC solves a finite horizon problem in a repeated fashion. At every sampling time step $k$ a $N$--step open-loop optimal control problem is solved. The solution of the first step is then applied as a control input $u(k)$ and the rest is dismissed. At the next time step $k+1$ the problem is initialized with the current state $x(k+1)$ and the open-loop optimal control procedure is repeated to find $u(k+1)$. This iterative control technique is also referred to as receding horizon control (RHC). An introduction on the topic and theory can be found in Morari's and Lee's essay \cite{Morari1999} or Maciejowski's book \cite{Maciejowski2002}.
+
+The main advantage of model predictive control is the incorporation of constraints on inputs and states. This allows you to push the system to the limits and thus a fast control. Second, due to its predictive nature, the controller has automatic feed-forward behavior. Given the problem is convex, e.g. linear system, quadratic cost and box constraints, very efficient solvers are available and the solution is optimal with respect to the formulation. Additionally linear MPC has some advances in theory, like stability guarantees and offset-free control.
+
+\subsection{Problem Formulation}
+We will present an offset-free, reference tracking, linear MPC scheme. Steady-state offset-free control is achieved by augmenting the state dynamics with a constant disturbance as proposed by Pannocchia and Rawlings and extended by Maeder \cite{Pannocchia2003a,Maeder2009}. The disturbance is estimated using a Luenberger Observer. Reference tracking is done by finding steady-state inputs and states, that are sufficient to meet the control target. The optimization will then try to find a control input to minimize the distance between the states and inputs and their corresponding steady-state value. We choose a quadratic cost. 
+
+For our multirotor the open-loop optimal control problem formulates as following:
+
+\begin{align}
+&\min_{u(0),u(1),\ldots,u(N)}
+& & ||x_N-\bar{x}_t||_P^2 + \sum_{k=0}^{N-1} ||x_k - \bar{x}_t||_Q^2 + ||u_k - \bar{u}_t||_R^2  \\
+& \text{s.t.} 
+& & x_{k+1} = A x_k + B u_k + B_w w_k + B_d d_k, & k = 0, \ldots, N-1 \nonumber\\
+& & & w_{k+1} = w_k  & k = 0, \ldots, N-1 \nonumber\\
+& & & d_{k+1} = d_k, & k = 0, \ldots, N-1 \nonumber\\
+& & & x_k \in \mathcal{X}, \; u_k \in \mathcal{U}, & k = 0, \ldots, N-1 \nonumber\\
+& & & x_N \in \mathcal{X}_f \nonumber\\
+& & & x_0 = \hat x (t), \; d_0 = \hat d(t), \; w_0 = \hat w(t) \nonumber
+\end{align}
+
+The steady-state targets $\bar{x}_t$ and $\bar{u}_t$ 
+\subsection{Implementation}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% NMPC
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{NMPC} 

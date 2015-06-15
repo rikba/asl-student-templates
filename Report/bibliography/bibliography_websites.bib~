@@ -64,9 +64,16 @@ howpublished = {\url{http://www.google-opensource.blogspot.ch/}}
 
 @MISC{www:googleheliostat,
 author = {{G}oogle},
-title = {{O}pen {S}ource {B}log},
+title = {{W}ind {O}bservation},
 month = June,
 year = {2015},
 howpublished = {\url{http://www.google.org/pdfs/google_heliostat_wind_data_collection.pdf}}
 }
 
+@MISC{www:robustquad,
+author = {{G}oogle},
+title = {{R}obust {L}earning {C}ontrol {B}ased on {G}aussian {P}rocess {R}egression},
+month = June,
+year = {2015},
+howpublished = {\url{https://www.youtu.be/YqhLnCm0KXY}}
+}

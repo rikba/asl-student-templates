@@ -1,0 +1,34 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%	PSEUDOCODE -- LQRI control
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{algorithm}
+\caption{LQRI control}\label{alg:lqri}
+\begin{algorithmic}[0]
+
+\Procedure{getLQRIController}{$A,B,H,Q,R,Ts$}
+\State $A,B\gets \Call{discretizeSystem}{A,B,Ts}$
+\State $K\gets \Call{lqi}{A,B,H,Q,R}$
+\State \Return $K$
+\EndProcedure
+
+\Procedure{callLQRIController}{$x,r,e,K$}
+\State $x.pos \gets \Call{transformWorld2Orientation}{x.heading,x.pos}$
+\State $x.vel \gets \Call{transformWorld2Orientation}{x.heading,x.vel}$
+\State $r \gets \Call{transformWorld2Orientation}{x.heading,r}$
+\State $u \gets K \cdot [x;e]$
+\State $u.thrust\gets u.thrust + m \cdot g$
+\State $e \gets e + Ts \cdot (r - x) $
+\State \Return $u,e$
+\EndProcedure
+
+\State \textbf{main$()$}
+\State $K\gets \Call{getLQRIController}{A,B,H,Q,R,Ts}$ 
+\State $e,t,x\gets 0$
+\While{running}
+\State $r \gets \Call{getReferencePosition}{t}$
+\State $u,e\gets \Call{callLQRIController}{x,r,e,K}$
+\State $x\gets \Call{simulateMAV}{x,u,Ts}$
+\State $t\gets t+Ts$
+\EndWhile
+\end{algorithmic}
+\end{algorithm}

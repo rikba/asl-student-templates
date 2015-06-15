@@ -43,6 +43,20 @@
 \newcommand{\doublesize}[1]{\scalebox{2}{$#1$}}
 \newcommand{\onehalfsize}[1]{\scalebox{1.5}{$#1$}}
 
+% rotation matrices
+\newcommand{\rotOW}{\mathbf{R}_{\mathcal{O}\mathcal{W}}}
+\newcommand{\rotWO}{\mathbf{R}_{\mathcal{W}\mathcal{O}}}
+\newcommand{\rotOB}{\mathbf{R}_{\mathcal{O}\mathcal{B}}}
+\newcommand{\rotBO}{\mathbf{R}_{\mathcal{B}\mathcal{O}}}
+\newcommand{\rotBW}{\mathbf{R}_{\mathcal{B}\mathcal{W}}}
+\newcommand{\rotWB}{\mathbf{R}_{\mathcal{W}\mathcal{B}}}
+% coordinate system subscript
+\newcommand{\world}[1]{#1_{\mathcal{W}}}
+\newcommand{\orientation}[1]{#1_\mathcal{O}}
+\newcommand{\body}[1]{#1_\mathcal{B}}
+% discrete time
+\newcommand{\discrete}[1]{\bar{#1}} 
+
 
 \newlength\figureheight 
 \newlength\figurewidth
@@ -120,8 +134,8 @@ for Multirotors}
 \cleardoublepage
 \input{chapters/chapter_conclusion}
 \cleardoublepage
-\input{chapters/chapter}
-\cleardoublepage
+%\input{chapters/chapter}
+%\cleardoublepage
 % \input{}
 % \cleardoublepage
 % \input{}
