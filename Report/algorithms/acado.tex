@@ -1,0 +1,168 @@
+\begin{lstlisting}[frame=single,language={Matlab},caption={MATLAB code for ACADO solver generation}]
+function [] = createACADOController(uavParameters,model_parameters,N)
+% creates the non-linear MPC solver using the ACADO Toolkit
+% uavParameters contains the multirotor parameters, like mass and number of
+% rotors
+% model_parameters contains the control specific models, like the second 
+% order attitude model
+
+% clean folder
+delete('non_linear_mpc*');
+clearvars -global ACADO_
+
+% QPOASES or QPDUNES
+SOLVER = 'QPDUNES';
+EXPORT = 1;
+
+% initialize export
+
+DifferentialState dphi phi dtheta theta x dx y dy z dz e_x e_y e_z;
+Control T_ref phi_ref theta_ref;
+OnlineData v_W_x v_W_y v_W_z psi_t x_des y_des z_des;
+
+n_X = length(diffStates);
+n_U = length(controls);
+
+% constants
+% could be given to controller as OnlineData to allow more than one
+% multirotor platform to be controlled with the same solver
+Ts = model_parameters.dT_pos;
+m = uavParameters.mass; 
+g = uavParameters.g;
+C_D = uavParameters.k_drag;
+Aphi = model_parameters.roll_model.A;
+Bphi = model_parameters.roll_model.B;
+Atheta = model_parameters.pitch_model.A;
+Btheta = model_parameters.pitch_model.B;
+sum_omega = sum(uavParameters.hover_n);
+
+% constraints
+att_abs = 45*pi/180;
+T_min = uavParameters.min_n^2 * uavParameters.k_n*uavParameters.numMotors;
+T_max = uavParameters.max_n^2 * uavParameters.k_n*uavParameters.numMotors;
+
+% integrator modeling
+% logistics function to approximate step function to cap integrator
+int_max = 0.2;
+L = 1;
+x0 = int_max;
+k = 10^2;
+
+% initialize MPC export
+acadoSet('problemname', 'non_linear_mpc');
+ocp = acado.OCP( 0.0, N*Ts, N );
+
+% Differential Equation
+
+% rotation matrix World->Base
+R_BW_z = [cos(psi_t) sin(psi_t) 0;
+    -sin(psi_t) cos(psi_t) 0;
+    0 0 1];
+R_BW_y = [cos(theta) 0 -sin(theta);
+    0 1 0;
+    sin(theta) 0 cos(theta)];
+R_BW_x = [1 0 0;
+    0 cos(phi) sin(phi);
+    0 -sin(phi) cos(phi)];
+% ZYX-convention
+R_BW = R_BW_x * R_BW_y * R_BW_z;
+R_WB = R_BW.';
+
+
+% ODE
+% Linear Subsystem
+A1 = blkdiag(Aphi,Atheta); % 4x4
+B1 = [zeros(length(A1),1) blkdiag(Bphi,Btheta)]; % 4x3
+ocp.setLinearInput(A1, B1);
+
+% Nonlinear Subsystem
+f = [0 == dx - dot(x);
+0 == [1 0 0] * (1/m * R_WB * [0;0;T_ref] - ...
+1/m * R_WB * [1 0 0;0 1 0;0 0 0] * R_WB.' * ...
+([dx;dy;dz]-[v_W_x;v_W_y;v_W_z]) * C_D * sum_omega + [0;0;-g]) - dot(dx);
+0 == dy - dot(y);
+0 == [0 1 0] * (1/m * R_WB * [0;0;T_ref] - ...
+1/m * R_WB * [1 0 0;0 1 0;0 0 0] * R_WB.' * ...
+([dx;dy;dz]-[v_W_x;v_W_y;v_W_z]) * C_D * sum_omega + [0;0;-g]) - dot(dy);
+0 == dz - dot(z);
+0 == [0 0 1] * (1/m * R_WB * [0;0;T_ref] - ...
+1/m * R_WB * [1 0 0;0 1 0;0 0 0] * R_WB.' * ...
+([dx;dy;dz]-[v_W_x;v_W_y;v_W_z]) * C_D * sum_omega + [0;0;-g]) - dot(dz);
+0 == (L/(1+exp(-k*(e_x+x0))) - ...
+L/(1+exp(-k*(e_x-x0)))) * (x-x_des) - dot(e_x);
+0 == (L/(1+exp(-k*(e_y+x0))) - ...
+L/(1+exp(-k*(e_y-x0)))) * (y-y_des) - dot(e_y);
+0 == (L/(1+exp(-k*(e_z+x0))) - ...
+L/(1+exp(-k*(e_z-x0)))) * (z-z_des) - dot(e_z)];
+ocp.setModel(f);
+
+% weight initialization
+W_mat = eye(n_X+n_U,n_X+n_U);
+WN_mat = eye(n_X,n_X);
+W = acado.BMatrix(W_mat);
+WN = acado.BMatrix(WN_mat);
+
+% cost function 
+h = [diffStates; controls];
+hN = diffStates;
+ocp.minimizeLSQ( W, h );
+ocp.minimizeLSQEndTerm( WN, hN );
+
+% constraints
+ocp.subjectTo( T_min <= T_ref <= T_max );
+ocp.subjectTo( -att_abs <= phi_ref <= att_abs);
+ocp.subjectTo( -att_abs <= theta_ref <= att_abs);
+
+mpc = acado.OCPexport( ocp );
+
+if(strcmp(SOLVER, 'QPOASES'))
+% qpOASES
+mpc.set( 'QP_SOLVER',                   'QP_QPOASES'    	);
+mpc.set( 'HESSIAN_APPROXIMATION',       'GAUSS_NEWTON'      );
+mpc.set( 'DISCRETIZATION_TYPE',         'MULTIPLE_SHOOTING' );
+mpc.set( 'SPARSE_QP_SOLUTION',          'FULL_CONDENSING_N2');
+mpc.set( 'INTEGRATOR_TYPE',             'INT_IRK_GL4'       ); 
+mpc.set( 'HOTSTART_QP',                 'NO'                );
+mpc.set( 'NUM_INTEGRATOR_STEPS',        2*N                 );
+mpc.set( 'HOTSTART_QP',                 'NO'             	);
+mpc.set( 'LEVENBERG_MARQUARDT', 		 1e-10				);
+elseif(strcmp(SOLVER, 'QPDUNES'))
+% qpDUNES
+mpc.set( 'SPARSE_QP_SOLUTION',          'SPARSE_SOLVER'     ); 
+mpc.set( 'QP_SOLVER',                   'QP_QPDUNES'        );
+mpc.set( 'HESSIAN_APPROXIMATION',       'GAUSS_NEWTON'      );
+mpc.set( 'DISCRETIZATION_TYPE',         'MULTIPLE_SHOOTING' );
+mpc.set( 'INTEGRATOR_TYPE',             'INT_IRK_GL2'       ); 
+mpc.set( 'IMPLICIT_INTEGRATOR_NUM_ITS', 2                   ); 
+mpc.set( 'NUM_INTEGRATOR_STEPS',        N                   ); 
+mpc.set( 'HOTSTART_QP',                 'YES'             	); 
+end
+
+
+
+if EXPORT
+    % get local home path
+    if ispc; userdir= getenv('USERPROFILE'); 
+    else userdir= getenv('HOME'); 
+    end
+
+    mpc.exportCode( 'export_MPC' );
+    
+    % copy QP solver to generated solver
+    if(strcmp(SOLVER, 'QPOASES'))
+    copyfile(strcat(userdir ,...
+        '/Software/ACADOtoolkit/external_packages/qpoases'), ...
+        'export_MPC/qpoases');
+    elseif(strcmp(SOLVER, 'QPDUNES'))
+    copyfile(strcat(userdir,'/Software/qpDUNES-master/'),...
+        'export_MPC/qpdunes');
+    end
+    
+    cd export_MPC
+    make_acado_solver('../acado_MPCstep')
+    cd ..
+end
+
+
+end
+\end{lstlisting}

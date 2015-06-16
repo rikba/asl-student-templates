@@ -101,15 +101,15 @@ z_k &= H y_k
 For our multirotor the open-loop optimal control problem formulates as following:
 
 \begin{align}
-&\min_{u(0),u(1),\ldots,u(N)}
-& & ||x_N-\bar{x}_t||_P^2 + \sum_{k=0}^{N-1} ||x_k - \bar{x}_t||_Q^2 + ||u_k - \bar{u}_t||_R^2  \label{eq:mpc_opti}\\
+&\min_{u(\cdot),x(\cdot)}
+& & ||x_N-\bar{x}_t||_P^2 + \sum_{k=0}^{N-1} ||x_k - \bar{x}_t||_Q^2 + ||u_k - \bar{u}_t||_R^2  \nonumber\\
 & \text{s.t.} 
 & & x_{k+1} = A x_k + B u_k + B_w w_k + B_d d_k, & k = 0, \ldots, N-1 \nonumber\\
 & & & w_{k+1} = w_k  & k = 0, \ldots, N-1 \nonumber\\
 & & & d_{k+1} = d_k, & k = 0, \ldots, N-1 \nonumber\\
 & & & x_k \in \mathcal{X}, \; u_k \in \mathcal{U}, & k = 0, \ldots, N-1 \nonumber\\
 & & & x_N \in \mathcal{X}_f \nonumber\\
-& & & x_0 = \hat x (t), \; d_0 = \hat d(t), \; w_0 = \hat w(t) \nonumber
+& & & x_0 = \hat x (t), \; d_0 = \hat d(t), \; w_0 = \hat w(t) \label{eq:mpc_opti}
 \end{align}
 
 As in the LQRI, we require $Q\succeq$, $P\succeq$ and $R\succ0$. We will choose $P$ to solve the Riccati equation. This mimics unconstrained infinite horizon control at the end of the horizon and guarantees stability for the closed-loop linear system, if the terminal set is invariant.
@@ -181,7 +181,7 @@ A-I & B_d \\ C & I
 \subsection{Implementation}
 The MPC can be summarized in the following steps:
 \begin{enumerate}
-\item initialization: compute offline $P$, $L$, $M^{-1}$
+\item initialization: compute $P$, $L$, $M^{-1}$
 \item repeat at every sample time
 \begin{enumerate}
 \item update state and disturbance estimation \ref{eq:mpc_obsv_update} \label{enum:mpc_start}
@@ -191,18 +191,15 @@ The MPC can be summarized in the following steps:
 \end{enumerate}
 \end{enumerate}
 
-\subsubsection{Solver}
+\subsubsection{CVXGEN}
 The optimization problem \ref{eq:mpc_opti} is the computationally limiting part in MPC, as a convex optimization problem has to be solved. One can handle this problem by explicitly solving \ref{eq:mpc_opti} for various constraint and state combinations and looking up the control law, which is piecewise affine. Another solution is online optimization, which we choose.
 
-Convex optimization problems can be solved very efficiently using the code generation software for convex optimization CVXGEN by Mattingley and and Boyd \cite{Mattingley2010}. One can simply formulate the problem similar to \ref{eq:mpc_opti} in the CVXGEN interface. The software then automatically generates c-code and a MATLAB MEX interface with the solver. This solver then can be called from within MATLAB using \texttt{csolve}.
+Convex optimization problems can be solved very efficiently using the code generation software for convex optimization CVXGEN by Mattingley and and Boyd \cite{Mattingley2010}. Unlike regular parser, the hard-coded solver solve optimizations a lot faster. They exploit the fact that the problems dimensions and structure is known a priori. For example, they take care of transformations in advance and allocate memory in an initialization phase of the running program.
 
-The code for generating the solver is displayed in figure \ref{fig:cvxgen}. The dimensions and the prediction horizon have to be fixed. For the proposed linear system \ref{eq:lin_sys_dt}, we have $n_x=n_d=10$ states and disturbances, $n_u=3$ control inputs and $n_w=2$ wind inputs. The number of states, control inputs, prediction horizon and constraints determines the size of the optimization problem. We choose a prediction horizon of $N=20$. For larger horizons, the program becomes too large and the computation time exceeds the limits. All other parameters can be passed to the solver before calling \texttt{csolve}.
-\begin{figure}
-\centering
-\input{algorithms/cvxgen.tex}
-\caption{CVXGEN code}
-\label{fig:cvxgen}
-\end{figure}
+For code generation, one can simply write down the problem similar to \ref{eq:mpc_opti} in the CVXGEN interface. The software then automatically generates hard-coded c-code and a MATLAB MEX interface with the solver. This solver then can be called from within MATLAB using \texttt{csolve}.
+
+The code for generating the solver is displayed in listing \ref{code:cvxgen} in the appendix. The dimensions and the prediction horizon have to be fixed. For the proposed linear system \ref{eq:lin_sys_dt}, we have $n_x=n_d=10$ states and disturbances, $n_u=3$ control inputs and $n_w=2$ wind inputs. The number of states, control inputs, prediction horizon and constraints determines the size of the optimization problem. We choose a prediction horizon of $N=20$. For larger horizons, the program becomes too large and the computation time exceeds the limits. All other parameters can be passed to the solver before calling \texttt{csolve}.
+
 \subsubsection{System Matrices}
 As for the LQRI, we consider the heading free linear system \ref{eq:lin_sys_dt}. We discretized our model (denoted by a bar) and assign it to the above defined MPC state-space system \ref{eq:MPC_dt}. Again notice, that the position and velocity in the state and the reference need to be converted into orientation-fixed frame. 
 \begin{align}
@@ -263,8 +260,138 @@ Unlike MPC, however, the solution of the optimal control problem is not necessar
 
 An introduction to the topic can be found in Allgöwer and Johansen \cite{Allgower2004,Johansen2011}. More advanced strategies and future outlooks can be found in Findeisen's, Allgöwer's and Biegler's lecture notes on NMPC \cite{Findeisen2007}.
 
-We will derive a potentially simple reference-tracking offset-free controller for the nonlinear dynamics proposed in the state equations \ref{eq:state_diff}. For guidance and code generation we used the open-source ACADO toolbox written by Diehl, Ferreau, Houska, Vukov and others \cite{Houska2011,Vukov2013}.
+We will derive a potentially simple reference-tracking offset-free controller for the nonlinear dynamics proposed in the state equations \ref{eq:state_diff}. For guidance and code generation we used the open-source Automatic Control and Dynamic Optimization (ACADO) toolbox written by Diehl, Ferreau, Houska, Vukov and others \cite{Houska2011,Vukov2013}.
 
 Although Fontes \cite{Fontes2001} provides a technique to guarantee closed-loop stability, our controller will have no proof on stability. The approach by Fontes relies on finding a terminal penalty and terminal region such that a Lyapunov function can be found, that guarantees stability. We instead totally rely on a range of simulations. 
 
 \subsection{Problem Formulation}
+We consider the following continuous time optimal control problem (OCP).
+\begin{align}
+&\min_{x(\cdot),u(\cdot)} &&\int_{t}^{t+NT_s} \left( ||x(\tau)-x_{ref}(\tau)||_Q^2 + ||u(\tau)-u_{ref}(\tau)||_R^2 \d \tau \right)  \nonumber \\
+&&&+ ||x(t+NT_s)-x_{ref}(t+NT_s)||_P^2, \nonumber \\
+&s.t. &&\dot{x}(\tau) = f(x(\tau),u(\tau)), \nonumber \\
+&&&\dot{w}(\tau) = 0, \nonumber \\
+&&&\dot{\psi}(\tau) = 0, \nonumber \\
+&&&x(\tau) \in \mathcal{X}, \; u(\tau) \in \mathcal{U}, \quad \forall\tau\in\left[t,t+NT_s\right], \nonumber \\
+&&&x(t) = \hat{x}(t),\; w(t) = \hat{w}(t), \; \psi(t) = \hat{\psi}(t).  \label{eq:nmpc_opt_prob}
+\end{align}
+$N$ is the time horizon, $T_s$ is the sampling time, $t$ is the current sampling instant time, $Q\succeq0$ is the state penalty, $R\succ0$ is the input penalty, $P\succeq0$ is the terminal state penalty, $f(\cdot)$ is the differential equation governing the system, $\mathcal{X}$ is the unconstrained state space, $\mathcal{U}$ is the constrained input space, $\hat{x}(t)$ is the state, $\hat{w}(t)$ the wind and $\hat{\psi}(t)$ the heading measurements at the current sampling instant.
+
+In order to achieve offset-free control at steady state, the state $x(t)$ is augmented with an integrator state $e(t)$.
+\subsection{Implementation}
+The NMPC is implemented using MATLAB. The solver to the OPC is generated offline using the ACADO toolkit. The solver is then called at every sample instant. The running program can be summarized into the following steps:
+
+\begin{enumerate}
+\item initialization: compute $P$, set warm start
+\item repeat at every sample time
+\begin{enumerate}
+\item set online data (wind, heading)
+\item set reference
+\item set warm start
+\item solve OPC
+\item save future inputs and outputs
+\item update integrator
+\item apply first control input
+\end{enumerate}
+\end{enumerate}
+\subsubsection{ACADO}
+For generating the solver we use the ACADO toolbox. The toolbox has a MATLAB interface that simplifies the creation. Vukov gives a good introduction to the solver \cite{Vukov2013}.The OCP \ref{eq:nmpc_opt_prob} is discretized using multiple shooting as presented by Bock \cite{bock1984multiple}. The discrete non-linear least square optimal control problem is then solved using a generalized Gauss-Newton method, which was elaborated by Bock as well \cite{Bock1983}. Diehl optimized this method for MPC. The real-time iteration (RTI) scheme \cite{Diehl2005} uses the control inputs and states from the previous optimization run as a new linearization point and following that only one Newton-iteration is necessary per sampling instant.
+
+ACADO supports different solvers for the discretized non-linear least square OCP. By default, ACADO uses the dense linear algebra solver qpOASES written by Ferreau \cite{Ferreau2014}. It uses a condensing based RTI scheme, which reduces the number of optimization variables and performs well for short prediction horizons.
+
+In MPC long prediction horizons are desired. For our problem we will have $N=100$. A sparse quadratic program solution is more efficient. Recently Frasch released a new open-source sparse solver called qpDUNES \cite{Frasch}. It uses a mix of the structure exploitation of interior point methods and warm-starting capabilities of active set methods. The solving time for the hexacopter OCP \ref{eq:MPC_dt} was cut down to a half using the sparse solver instead of the condensed solver.
+
+Other solvers supported by ACADO are HPMPC by Frison \cite{www:hpmpc} and FORCES by Dimahidi \cite{www:forces}. They were not used because either they were not fully supported by the MATLAB interface or required a license.
+
+Further we optimized the ACADO solver settings to achieve a computation time as small as possible (see chapter). We use a second order implicit Runge-Kutta method for integration instead of a fourth order method, reduced the number of integrator iterations to two (5 by default) and used $N=100$ integrator steps.
+
+The code for creating the solver is printed in listing \ref{code:acado}.
+\subsubsection{System Dynamics}
+We can directly use the derived non-linear system dynamics \ref{eq:state_diff}. We will consider the positions and translational velocities in world-fixed coordinates and the angles and angular rates in orientation-fixed coordinates. The state however, is augmented by an integrator.
+\begin{align}
+x &= \begin{bmatrix}
+\mathbf{x} \\
+\mathbf{e}
+\end{bmatrix} \\
+u &= \mathbf{u} \\
+w &= \mathbf{w} \\
+f(x(t),u(t)) &= \begin{bmatrix}
+f(\mathbf{x},\mathbf{u},\mathbf{w}) \\
+\ddt \mathbf{e}
+\end{bmatrix} \label{eq:ocp_dyn}
+\end{align}
+The dynamics of the wind and the heading are actually not modeled as in the OCP \ref{eq:nmpc_opt_prob}, but rather fed to the NMPC as a constant $N\times4$ array. This can be done in ACADO using the \texttt{OnlineData} data type.
+\subsubsection{Integrator}
+The integrator follows the dynamics
+\begin{align}
+\ddt \mathbf{e}_{real}(\tau) &= \mathbf{r}_{ref} - \mathbf{r(\tau)},  \label{eq:e_dt} \\
+e_{real}(t) &= e_{real}(t), \\
+-e_{max} \mathbf{1} &\leq e_{real}(t) \leq e_{max}  \mathbf{1} .
+\end{align}
+It is limited by the upper and lower value $e_{max}=0.2$ in order to prevent the system from wind-up. However, this constraint can not straight forward be implemented in the ACADO differential equation. 
+
+If it was just set as a constraint, the problem immediately goes infeasible, if the set point is to far away from the current position. Imagine for example the MAV being away $x_{ref}-x(t) = 1 \si{\metre}$ away from the reference position. If the MAV can not make it to the reference within the prediction horizon, the integral term will strictly monotonously grow, exceed the maximum value, and the optimization problem is infeasible.
+
+To prevent this, we do not constraint the error term hard, but rather window its differential equation. If the error term is outside the boundary, the growth will be set to zero. We impose a rectangular window on the error function \ref{eq:e_dt}. Because a rectangular window function is discontinuous, we will rather approximate the step functions generating the window by a combination of logistic functions \ref{eq:logistics_window}. Such a window is depicted in figure \ref{fig:logistics_window}.
+\begin{align}
+W(e_x) &= \frac{L}{1+\exp{(-k(e_x+e_{max}))}}  - \frac{L}{1+\exp{(-k(e_x-e_{max}))}}\label{eq:logistics_window}
+\end{align}
+\begin{figure}
+\centering
+\includegraphics{images/window.tikz}
+\caption{Approximated rectangular window as combination of logistics functions with $e_{max}=0.2$, $L=1$, $k=10^2$}
+\label{fig:logistics_window}
+\end{figure}
+Thus, the integrator dynamics in \ref{eq:ocp_dyn} are modeled for the non-linear OCP:
+\begin{align}
+\ddt \mathbf{e}(\tau) &= \begin{bmatrix} 
+W(e_x(\tau)) & 0 & 0 \\
+0 & W(e_y(\tau)) & 0 \\
+0 &  0 & W(e_z(\tau))
+\end{bmatrix}
+\left(\mathbf{r}_{ref} - \mathbf{r(\tau)} \right), \\
+\mathbf{e}(t) = \mathbf{e}_{real}(t).
+\end{align}
+\subsubsection{Reference}
+The reference $x_{ref}$ inputted into the acado solver consists of an $N+1\times13$ array which is updated at every sample instant with the very next desired position and if possible all next $N$ future reference positions and velocities. With the controller having knowledge about the desired future position and velocity, feedforward is granted. If they are not known, the position reference will just be constant over the whole prediction horizon and the velocity reference will be set to zero. 
+
+The reference attitude is set to zero, which causes some "damping", depending on the weight on the attitude error term. The integrator reference is set to zero, to make the system drive the integrator to zero.
+\begin{align}
+x_{ref} = \begin{bmatrix}
+0 & 0 & 0 & 0 & \mathbf{r}_{ref,t} & \mathbf{v}_{ref,t} & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & \mathbf{r}_{ref,t+T_s} & \mathbf{v}_{ref,t+T_s} & 0 & 0 & 0 \\
+ &  &  &  & \vdots &  &  &  &  \\
+0 & 0 & 0 & 0 & \mathbf{r}_{ref,t+NT_s} & \mathbf{v}_{ref,t+NT_s} & 0 & 0 & 0 
+\end{bmatrix}
+\end{align}
+
+The reference input $u_{ref}$ consists of a $N\times3$ array of the steady state hovering inputs. With according penalty on the offset from hovering, this leads to some damping as well.
+\begin{align}
+u_{ref} = \begin{bmatrix}
+mg & 0 & 0 \\
+mg & 0 & 0 \\
+  & \vdots &  \\
+mg & 0 & 0 
+\end{bmatrix}
+\end{align}
+\subsubsection{Weights}
+The final penalty $P$ is the solution of the continuous time algebraic Riccati equation \ref{eq:care} of the linearized system \ref{eq:lin_sys_dt}. The solution is found using MATLAB's \texttt{lqi}.
+\begin{align}
+A^TP+PA-PBB^TP+Q=0\label{eq:care}
+\end{align}
+While this is not totally correct, as the linearized system uses an orientation-fixed coordinate system for the translational dynamics, it still gives an approximation for the infinite horizon OCP solution at the final time step.
+\subsubsection{Constraints}
+Again, we will only use input constraints. We want to keep the attitude bounded, such that it does not diverge too much from the linearization point (our attitude dynamics are still linearized around hovering) or even gets into regions of singular Euler angles. And we limit the thrust within the capable regions given by the motors (see equations \ref{eq:T_min} and \ref{eq:T_max}. However, we allow a little more tilt than in the linear MPC.
+
+\begin{align}
+T_{min} \leq T_{ref} \leq T_{max} \\
+\si{-45}{\degree} \leq \phi_{ref} \leq \si{45}{\degree} \\
+\si{-45}{\degree} \leq \theta_{ref} \leq \si{45}{\degree}
+\end{align}
+
+\subsubsection{Initialization and Warm Start}
+At every sample instant we will initialize the OCP \ref{eq:nmpc_opt_prob} with the previously determined optimal state and input. This will lead to convergence of the NMPC loop according to Diehl's work on the real-time iteration (RTI) scheme \cite{Diehl2005}.
+
+At the very first sampling instant, the OCP state vector is initialized with zero attitude and the desired position and velocity. The optimal input is initialized with hovering.
+
+\subsection{Simulation Results}

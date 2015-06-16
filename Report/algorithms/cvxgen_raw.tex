@@ -1,0 +1,41 @@
+dimensions
+  n_u = 3   # inputs
+  n_x = 10  # states
+  n_d = 10  # constant disturbances
+  n_w = 2   # wind disturbances (x,y)
+  N = 20    # horizon  
+end
+
+parameters
+  A (n_x,n_x)                # dynamics matrix
+  B (n_x,n_u)                # transfer matrix
+  Bd (n_x,n_d)               # disturbance transfer matrix
+  Bw (n_x,n_w)               # wind transfer matrix
+  Q (n_x,n_x) diagonal psd   # state cost
+  Q_final (n_x,n_x) psd      # final state cost
+  R (n_u,n_u) diagonal psd   # input cost
+  x[0] (n_x)                 # initial state
+  u_max (n_u)                # upper input constraints
+  u_min (n_u)                # lower input constraints
+  x_ss (n_x)                 # desired state at steady state
+  u_ss (n_u)                 # desired input at steady state
+  d (n_d)                    # estimated constant disturbances
+  w (n_w)                    # estimated constant wind
+end
+
+variables
+  x[t]  (n_x), t=1..N+1  # state
+  u[t]  (n_u), t=0..N    # input
+end
+
+minimize
+  sum[t=0..N](quad(x[t]-x_ss, Q) + quad(u[t] - u_ss, R)) 
+  + quad(x[N+1]-x_ss, Q_final)
+subject to
+  # dynamics constraints
+  x[t+1] == A*x[t] + B*u[t] + Bw*w + Bd*d, t=0..N  
+  # upper input constaint halfspace  
+  u[t] <= u_max, t=0..N            
+  # lower input constraint halfspace  
+  u[t] >= u_min, t=0..N                             
+end
