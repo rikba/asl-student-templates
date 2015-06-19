@@ -57,8 +57,8 @@ For reference tracking the error term $e(k)$ has to be minimized. This means, th
 \end{bmatrix} \\
 \mathbf{R} &= \begin{bmatrix}
 0.01 & 0 & 0 \\
-0 & 0.03 & 0 \\
-0 & 0 & 0.03
+0 & 0.3 & 0 \\
+0 & 0 & 0.3
 \end{bmatrix}
 \end{align}
 
@@ -78,7 +78,75 @@ u(k) = \mathbf{K} x(k).
 
 Since the position and velocity state estimations and reference position come in world-coordinates from the sensor fusion, these have to be transformed to orientation-fixed frame first, before applying the control law. Also the control input, which is according to the formulation \ref{eq:lqri_u} relative to the hovering input, needs to be transformed, before returning it to the system. Algorithm \ref{alg:lqri} illustrates the described simulation.
 \input{algorithms/lqri_control.tex}
+
 \subsection{Simulation Results}
+To validate the controller's quality, we perform various experiments using the MATLAB simulator proposed above. First, we will determine the performance. Then we will check its ability to follow dynamic references. Next we will see how it reacts to measurement noise. Finally, a wind experiment is performed.
+
+\subsubsection{Performance}
+In order to determine the performance of the LQRI, we run a noise free step experiment. The reference is set $1 \si{\metre}$ away from the MAV into $x$--direction. The LQRI then finds appropriate input signals for the multirotor to move to this position. Figure \ref{fig:lqri_step} depicts the outcome of this experiment.
+\begin{figure}
+\centering
+\subfloat[][{Position output}]{
+\includegraphics{\folder/tikzfigures/step_response_out_lqri.tikz}
+\label{fig:lqri_step_out}}
+\qquad
+\subfloat[][{Control input}]{
+\includegraphics{\folder/tikzfigures/step_response_in_lqri.tikz}
+\label{fig:lqri_step_in}}
+\caption{Unit step response LQRI}
+\label{fig:lqri_step}
+\end{figure}
+
+The step response shows a typical integrator action. It overshoots the targeted position but then settles to the desired value. The hexacopter has a $10$ to $90\si{\percent}$ rise time of $0.91 \si{\second}$ and a $2\si{\percent}$ settling time of $2.76 \si{\second}$. Also it overshoots about $7 \si{\centi\metre}$.
+
+The control inputs show typical LQRI behavior. In the first interval the multirotor pitches towards the desired target position. Then at some point on its way it pitches back into the opposite direction to slow down the MAV. This repeats until the integral error has diminished. For the thrust, in the first interval it loses some in order to pitch faster. Next the hexacopter accelerates slightly, before it eventually has settled and the thrust returns to steady-state.
+
+In the output \ref{fig:lqri_step_out} one can notice, that the MAV is slightly losing height in the driving phase from $0.5$ to $1.5 \si{\second}$. This could come from the fact, that the modeled rotor drag is lost in $z$--direction during linearization as it is higher order (see system matrix in \ref{eq:system_matrix}).
+
+\subsubsection{Delay}
+In this experiment, we want to show the LQRI's behavior when opposed to changing references. Again we run a noise free experiment. This time the MAV has to go forwards and backwards $1\si{\metre}$ twice within $6 \si{\second}$, which corresponds to following a sine trajectory.
+
+One can observe two issues, when following the sine reference (see figure \ref{fig:lqri_sine}). First the MAV does not reach the full amplitude. Second it reaches its amplitude with some delay.
+
+The multirotor not reaching the full amplitude comes from the rather ambitious reference trajectory. The LQRI is not able to follow such fast changes, as can be inferred from the response time in the step experiment.
+
+The second issue of having some delay comes on the one hand from the too slow close loop dynamics as stated before, and on the other hand from missing future knowledge. At every sample instant, the LQRI only knows, that it has to reach the very next reference point. In the infinite horizon optimal control problem, the solver assumes, that the MAV shall hover at this point. It does not know, that it has to keep going after reaching the position.
+
+One could reduce the latter problem of delay by giving some more information to the controller, e.g. feed a reference velocity.
+
+\begin{figure}
+\centering
+\includegraphics{\folder/tikzfigures/sine_response_out_LQRI.tikz}
+\caption{Sine trajectory experiment LQRI}
+\label{fig:lqri_sine}
+\end{figure} 
+
+\subsubsection{Noise}
+While the two experiments before have been noise free, in the real environment, the state measurement will always be corrupted by noise. Therefore, we will examine the effect of noise. We assume typical additive white noise and some delay on the states as proposed in the MATLAB simulator section \ref{sec:matlab_simulator}.
+
+We repeat the step experiment with additive noise about the position, velocity, angle and angular rate measurement. The magnitude is according to the Firefly's IMU and the Vicon specifications. The resulting step response with the according input can be seen in figure \ref{fig:lqri_step_noisy}.
+
+The noise is directly forwarded to the control input. What has been a smooth control signal in the noise free experiment \ref{fig:lqri_step_in} is now scrambled \ref{fig:lqri_step_in_noisy}. This lead to some undesired shaking or jerk of the MAV and is increased if the LQRI gain was increased. However, with this setup, the position tracking is still satisfied, and the controller remains stable.
+
+\begin{figure}
+\centering
+\subfloat[][{Position output}]{
+\includegraphics{\folder/tikzfigures/step_response_out_LQRI_noisy.tikz}
+\label{fig:lqri_step_out_noisy}}
+\qquad
+\subfloat[][{Control input}]{
+\includegraphics{\folder/tikzfigures/step_response_in_LQRI_noisy.tikz}
+\label{fig:lqri_step_in_noisy}}
+\caption{Unit step response LQRI with noisy state measurements}
+\label{fig:lqri_step_noisy}
+\end{figure}
+
+\subsubsection{Wind}
+The LQRI wind not explicitly modeled. Instead, it has to rely on the integral action to compensate wind. We run the following experiment:
+
+The MAV has to climb up linearly from $0$ to $20 \si{\metre}$ at $0.15 \si{\metre\per\second}$ in a helix like manner. While climbing up it has to complete $4$ circles with a diameter of $4\si{metre}$. The whole experiment takes $1 \si{\minute}$. 
+
+From $5$ to $15 \si{\metre}$ height, a horizontal wind gust in $x$--direction hits the MAV. The wind increases from $0$ to $10 \si{\metre\per\second$ and is modeled as stationary stochastic process as in equation \ref{eq:wind_state_space}.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % MPC
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -198,7 +266,7 @@ Convex optimization problems can be solved very efficiently using the code gener
 
 For code generation, one can simply write down the problem similar to \ref{eq:mpc_opti} in the CVXGEN interface. The software then automatically generates hard-coded c-code and a MATLAB MEX interface with the solver. This solver then can be called from within MATLAB using \texttt{csolve}.
 
-The code for generating the solver is displayed in listing \ref{code:cvxgen} in the appendix. The dimensions and the prediction horizon have to be fixed. For the proposed linear system \ref{eq:lin_sys_dt}, we have $n_x=n_d=10$ states and disturbances, $n_u=3$ control inputs and $n_w=2$ wind inputs. The number of states, control inputs, prediction horizon and constraints determines the size of the optimization problem. We choose a prediction horizon of $N=20$. For larger horizons, the program becomes too large and the computation time exceeds the limits. All other parameters can be passed to the solver before calling \texttt{csolve}.
+The code for generating the solver is displayed in listing \ref{code:cvxgen} in the appendix. The dimensions and the prediction horizon have to be fixed. For the proposed linear system \ref{eq:lin_sys_dt}, we have $n_x=n_d=10$ states and disturbances, $n_u=3$ control inputs and $n_w=2$ wind inputs. The number of states, control inputs, prediction horizon and constraints determines the size of the optimization problem. We choose a prediction horizon of $N=40$, which corresponds to looking $0.4\si{\second}$ ahead. For larger horizons, the optimal control problem becomes too large and the code can not be generated. All other parameters, like the system matrices, the current state and constraints, can be passed to the solver before calling \texttt{csolve}. Notice in the code, that we denoted the sparsity of the system matrices explicitly, which cut the computation time to half.
 
 \subsubsection{System Matrices}
 As for the LQRI, we consider the heading free linear system \ref{eq:lin_sys_dt}. We discretized our model (denoted by a bar) and assign it to the above defined MPC state-space system \ref{eq:MPC_dt}. Again notice, that the position and velocity in the state and the reference need to be converted into orientation-fixed frame. 
@@ -325,8 +393,8 @@ The dynamics of the wind and the heading are actually not modeled as in the OCP 
 The integrator follows the dynamics
 \begin{align}
 \ddt \mathbf{e}_{real}(\tau) &= \mathbf{r}_{ref} - \mathbf{r(\tau)},  \label{eq:e_dt} \\
-e_{real}(t) &= e_{real}(t), \\
--e_{max} \mathbf{1} &\leq e_{real}(t) \leq e_{max}  \mathbf{1} .
+e_{real}(t) &= e_{real}(t), \nonumber\\
+-e_{max} \mathbf{1} &\leq e_{real}(t) \leq e_{max}  \mathbf{1} \nonumber.
 \end{align}
 It is limited by the upper and lower value $e_{max}=0.2$ in order to prevent the system from wind-up. However, this constraint can not straight forward be implemented in the ACADO differential equation. 
 
@@ -338,8 +406,8 @@ W(e_x) &= \frac{L}{1+\exp{(-k(e_x+e_{max}))}}  - \frac{L}{1+\exp{(-k(e_x-e_{max}
 \end{align}
 \begin{figure}
 \centering
-\includegraphics{images/window.tikz}
-\caption{Approximated rectangular window as combination of logistics functions with $e_{max}=0.2$, $L=1$, $k=10^2$}
+\includegraphics{\folder/tikzfigures/window.tikz}
+\caption{Approximated rectangular window as combination of logistics functions with $e_{max}=\num{0.05}$, $L=1$, $k=\num{e2}$}
 \label{fig:logistics_window}
 \end{figure}
 Thus, the integrator dynamics in \ref{eq:ocp_dyn} are modeled for the non-linear OCP:
@@ -350,7 +418,7 @@ W(e_x(\tau)) & 0 & 0 \\
 0 &  0 & W(e_z(\tau))
 \end{bmatrix}
 \left(\mathbf{r}_{ref} - \mathbf{r(\tau)} \right), \\
-\mathbf{e}(t) = \mathbf{e}_{real}(t).
+\mathbf{e}(t) &= \mathbf{e}_{real}(t) \nonumber.
 \end{align}
 \subsubsection{Reference}
 The reference $x_{ref}$ inputted into the acado solver consists of an $N+1\times13$ array which is updated at every sample instant with the very next desired position and if possible all next $N$ future reference positions and velocities. With the controller having knowledge about the desired future position and velocity, feedforward is granted. If they are not known, the position reference will just be constant over the whole prediction horizon and the velocity reference will be set to zero. 
@@ -365,7 +433,7 @@ x_{ref} = \begin{bmatrix}
 \end{bmatrix}
 \end{align}
 
-The reference input $u_{ref}$ consists of a $N\times3$ array of the steady state hovering inputs. With according penalty on the offset from hovering, this leads to some damping as well.
+The reference input $u_{ref}$ consists of a $N\times3$ array of the steady state hovering inputs. With according penalty on the offset from hovering, the optimizer is trying to let the MAV not deviate to much from hovering state. This leads to some damping in the controller.
 \begin{align}
 u_{ref} = \begin{bmatrix}
 mg & 0 & 0 \\
@@ -375,7 +443,36 @@ mg & 0 & 0
 \end{bmatrix}
 \end{align}
 \subsubsection{Weights}
-The final penalty $P$ is the solution of the continuous time algebraic Riccati equation \ref{eq:care} of the linearized system \ref{eq:lin_sys_dt}. The solution is found using MATLAB's \texttt{lqi}.
+The cost function penalizes the difference between desired state and input and actual state and input over the horizon. We weight this deviation using the following diagonal matrices:
+%\begin{align}
+%Q = \begin{bmatrix}
+%\num{e-1} & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+%0 & 10^{-1} & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+%0 & 0 & 10^{-1} & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+%0 & 0 & 0 & 10^{-1} & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+%0 & 0 & 0 & 0 & 10^{-1} & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+%0 & 0 & 0 & 0 & 10^{-1} & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+%0 & 0 & 0 & 0 & 10^{-1} & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 
+%\end{bmatrix}
+%\end{align}
+\begin{align}
+&Q = \begin{bmatrix}
+Q_{att} & 0 & 0 & 0 \\
+0 & Q_{r} & 0 & 0 \\
+0 & 0 & Q_{v} & 0 \\
+0 & 0 & 0 & Q_{e}
+\end{bmatrix},\\
+&Q_{att}= \num{e-1} I_4  \quad  Q_{r} = \num{e1} I_3 \quad
+Q_{v} = \num{e-1} I_3  \quad Q_{e} = \num{e1} I_3 \nonumber \\
+&R = \begin{bmatrix}
+\num{e-1} & 0 & 0 \\
+0 & \num{3e-1} & 0 \\
+0 & 0 & \num{3e-1}
+\end{bmatrix}
+\end{align}
+The large gain in the position $Q_{r}$ and integrator penalty $Q_{e}$ amplifies the tracking behavior. The rather smaller other gains will lead to some damping, respectively subordinative velocity tracking in case of $Q_{v}$.
+
+The final penalty $P$ is the solution of the continuous time algebraic Riccati equation \ref{eq:care} of the linearized system \ref{eq:lin_sys_dt}. The solution is found using MATLAB's \texttt{lqi} function.
 \begin{align}
 A^TP+PA-PBB^TP+Q=0\label{eq:care}
 \end{align}
@@ -390,8 +487,7 @@ T_{min} \leq T_{ref} \leq T_{max} \\
 \end{align}
 
 \subsubsection{Initialization and Warm Start}
-At every sample instant we will initialize the OCP \ref{eq:nmpc_opt_prob} with the previously determined optimal state and input. This will lead to convergence of the NMPC loop according to Diehl's work on the real-time iteration (RTI) scheme \cite{Diehl2005}.
+At every sample instant we will initialize the OCP \ref{eq:nmpc_opt_prob} with the previously determined $N$ optimal states and inputs. This will lead to convergence of the NMPC loop according to Diehl's work on the real-time iteration (RTI) scheme \cite{Diehl2005}.
 
 At the very first sampling instant, the OCP state vector is initialized with zero attitude and the desired position and velocity. The optimal input is initialized with hovering.
-
 \subsection{Simulation Results}

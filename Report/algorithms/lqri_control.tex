@@ -11,10 +11,10 @@
 \State \Return $K$
 \EndProcedure
 
-\Procedure{callLQRIController}{$x,r,e,K$}
-\State $x.pos \gets \Call{transformWorld2Orientation}{x.heading,x.pos}$
-\State $x.vel \gets \Call{transformWorld2Orientation}{x.heading,x.vel}$
-\State $r \gets \Call{transformWorld2Orientation}{x.heading,r}$
+\Procedure{callLQRIController}{$x,r,e,K,\psi$}
+\State $x \gets \Call{transformWorld2Orientation}{x,\psi}$
+\State $x \gets \Call{transformAngVel2EulerRate}{x}$
+\State $r \gets \Call{transformWorld2Orientation}{r,\psi}$
 \State $u \gets K \cdot [x;e]$
 \State $u.thrust\gets u.thrust + m \cdot g$
 \State $u.yaw\gets r.yaw$
@@ -27,8 +27,8 @@
 \State $e,t,x\gets 0$
 \While{running}
 \State $r \gets \Call{getReferencePosition}{t}$
-\State $u,e\gets \Call{callLQRIController}{x,r,e,K}$
-\State $x\gets \Call{simulateMAV}{x,u,Ts}$
+\State $u,e\gets \Call{callLQRIController}{x,r,e,K,\psi}$
+\State $x,\psi\gets \Call{simulateMAV}{x,u,Ts}$
 \State $t\gets t+Ts$
 \EndWhile
 \end{algorithmic}

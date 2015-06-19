@@ -29,7 +29,8 @@ variables
 end
 
 minimize
-  sum[t=0..N](quad(x[t]-x_ss, Q) + quad(u[t] - u_ss, R)) + quad(x[N+1]-x_ss, Q_final)
+  sum[t=0..N](quad(x[t]-x_ss, Q) + quad(u[t] - u_ss, R)) 
+  + quad(x[N+1]-x_ss, Q_final)
 subject to
   # dynamics constraints
   x[t+1] == A*x[t] + B*u[t] + Bw*w + Bd*d, t=0..N  
