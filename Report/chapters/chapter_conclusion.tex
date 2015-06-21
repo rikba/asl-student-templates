@@ -1,2 +1,24 @@
 \chapter{Conclusion}
 \label{sec:conclusion}
+
+Intel Core i5 2.9 Ghz 4 cores, single threaded MATLAB R2014b
+\begin{table}
+\begin{center}
+\caption{Computation times LEE, LQRI, MPC, NMPC in $[\si{\milli\second}]$.}\vspace{1ex}
+\label{tab:computation_times}
+\begin{tabular}{ll|cccc}
+\hline
+      & index  & LEE        & LQRI       & MPC        & NMPC       \\ \hline \hline
+total & mean   & \num{0.28} & \num{1.72} & \num{4.25} & \num{4.33} \\
+      & median & \num{0.28} & \num{1.67} & \num{4.19} & \num{4.22} \\
+      & min    & \num{0.26} & \num{1.62} & \num{4.06} & \num{4.10} \\
+      & max    & \num{0.40} & \num{2.17} & \num{5.05} & \num{6.67} \\
+\hline
+online OCP & mean   & -- & -- & \num{0.85} & \num{2.46}\\
+           & median & -- & -- & \num{0.84} & \num{2.39}\\
+           & min    & -- & -- & \num{0.80} & \num{2.31}\\
+           & max    & -- & -- & \num{1.09} & \num{4.83}\\
+\hline
+\end{tabular}
+\end{center}
+\end{table}

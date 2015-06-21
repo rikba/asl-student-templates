@@ -433,7 +433,7 @@ From $5$ to $15 \si{\metre}$ height, a horizontal wind gust in $x$--direction hi
 \label{fig:mpc_helix}
 \end{figure}
 
-Even though, the wind measurements come with a delay of $0.1 \si{\second}$, the MPC is still a lot faster in compensating the drag due to the gust than the LQRI. The MPC controlled Firefly only deviates as much as $5\si{\centi\metre}$ from the reference trajectory, when the wind sets in \ref{fig:mpc_helix_xy}. Still it needs about $4\si{\seconds}$ to completely return to the reference.
+Even though, the wind measurements come with a delay of $0.1 \si{\second}$, the MPC is still a lot faster in compensating the drag due to the gust than the LQRI. The MPC controlled Firefly only deviates as much as $5\si{\centi\metre}$ from the reference trajectory, when the wind sets in \ref{fig:mpc_helix_xy}. Still it needs about $4\si{\second}$ to completely return to the reference.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % NMPC
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -507,6 +507,8 @@ f(\mathbf{x},\mathbf{u},\mathbf{w}) \\
 \end{bmatrix} \label{eq:ocp_dyn}
 \end{align}
 The dynamics of the wind and the heading are actually not modeled as in the OCP \ref{eq:nmpc_opt_prob}, but rather fed to the NMPC as a constant $N\times4$ array. This can be done in ACADO using the \texttt{OnlineData} data type.
+
+In the code generation \ref{code:acado} the system dynamics are explicitly separated into purely linear attitude dynamics and non-linear translational and error dynamics. Acado takes advantage of this structure as explained by Quirynen \cite{Quirynen2013}. The solving time has been reduced significantly $(2\si{\milli\second})$ for this problem when using the linear subsystem exploitation.
 \subsubsection{Integrator}
 The integrator follows the dynamics
 \begin{align}
@@ -586,7 +588,7 @@ Q_{v} = \num{e-1} I_3  \quad Q_{e} = \num{e1} I_3 \nonumber \\
 \num{e-1} & 0 & 0 \\
 0 & \num{3e-1} & 0 \\
 0 & 0 & \num{3e-1}
-\end{bmatrix}
+\end{bmatrix} \label{eq:nmpc_input_penalty}
 \end{align}
 The large gain in the position $Q_{r}$ and integrator penalty $Q_{e}$ amplifies the tracking behavior. The rather smaller other gains will lead to some damping, respectively subordinative velocity tracking in case of $Q_{v}$.
 
@@ -609,3 +611,78 @@ At every sample instant we will initialize the OCP \ref{eq:nmpc_opt_prob} with t
 
 At the very first sampling instant, the OCP state vector is initialized with zero attitude and the desired position and velocity. The optimal input is initialized with hovering.
 \subsection{Simulation Results}
+We run the same experiments as for the other two controllers to validate the NMPC's performance. These include a nominal step response, following a sinusoid reference, a noisy step experiment and finally a wind experiment. All of them are simulated in the MATLAB simulator with the same parameters as before. 
+
+\subsubsection{Performance}
+For performance examination, we run a noise-free step response experiment. The reference is set $1 \si{\metre}$ away from the MAV into $x$--direction. The NMPC finds appropriate tilting and thrust signals for the multirotor to move to this position. Figure \ref{fig:mpc_step} depicts the outcome of this experiment.
+\begin{figure}
+\centering
+\subfloat[][{Position output}]{
+\includegraphics{\folder/tikzfigures/step_response_out_NMPC.tikz}
+\label{fig:nmpc_step_out}}
+\qquad
+\subfloat[][{Control input}]{
+\includegraphics{\folder/tikzfigures/step_response_in_NMPC.tikz}
+\label{fig:nmpc_step_in}}
+\caption{Unit step response for the NMPC with the nominal model}
+\label{fig:nmpc_step}
+\end{figure}
+
+Like the MPC, the NMPC tilts towards the target hitting the constraints of $45\si{\degree}$, and then reverses the direction to slow down. The NMPC is tuned more aggressive, such that it has a more bang-bang like control input. 
+
+Due to its integral part, the MAV overshoots the setting point by $7\si{\centi\metre}$ and then settles down to the steady-state value. It achieves the fastest $10$ to $90\si{\percent}$ rise time of $0.46 \si{\second}$, but has due to its integrator only a $2\si{\percent}$ settling time of $1.71 \si{\second}$, which is about the MPC settling time.
+
+\subsubsection{Delay}
+Like the MPC, the NMPC has feed-forward capacities and thus is able to follow dynamic trajectories without delay. We repeat the sinusoid experiment in which the Firefly has to go back and forth $1\si{\metre}$ twice within $6 \si{\second}$. The controller has knowledge about the next $N=100$ ($1\si{\second}$) future reference positions and velocities and tries to minimize the distance to them. The resulting output is depicted in figure \ref{fig:nmpc_sine}.
+
+The MAV has to catch up with the reference position and then follows the reference quite closely. Due to its faster rise time, the NMPC performs best in reaching the target amplitude.
+
+\begin{figure}
+\centering
+\includegraphics{\folder/tikzfigures/sine_response_out_NMPC.tikz}
+\caption{Sine trajectory experiment NMPC}
+\label{fig:nmpc_sine}
+\end{figure} 
+
+\subsubsection{Noise}
+While the NMPC is the fastest proposed controller, it is not more sensitive to noise than the MPC controller. Again we run the step experiment augmented with measurement noise and delay, now with the NMPC. Figure \ref{fig:nmpc_step_noisy} shows the response and control input. 
+
+The measurement noise is entering the system in the initialization of the OCP \ref{eq:nmpc_opt_prob}. The noise leads to significant jumps in the input signal \ref{fig:nmpc_step_in_noisy}. The control target, however, is still being reached and the NMPC has not faces instability in any experiment.
+
+Still one should consider increasing the penalties on the input \ref{eq:nmpc_input_penalty} taking the controller to the real world.
+
+\begin{figure}
+\centering
+\subfloat[][{Position output}]{
+\includegraphics{\folder/tikzfigures/step_response_out_NMPC_noisy.tikz}
+\label{fig:nmpc_step_out_noisy}}
+\qquad
+\subfloat[][{Control input}]{
+\includegraphics{\folder/tikzfigures/step_response_in_NMPC_noisy.tikz}
+\label{fig:nmpc_step_in_noisy}}
+\caption{Unit step response NMPC with noisy state measurements}
+\label{fig:nmpc_step_noisy}
+\end{figure}
+
+
+\subsubsection{Wind}
+Like the MPC, the NMPC has wind feed-forward capabilities. We run the helix experiment with wind gust as above.
+
+The MAV has to climb up linearly from $0$ to $20 \si{\metre}$ at $0.15 \si{\metre\per\second}$ in a helix like manner. While climbing up it has to complete $4$ circles with a diameter of $4\si{metre}$. The experiment's total time is $1 \si{\minute}$. 
+
+From $5$ to $15 \si{\metre}$ height, a horizontal wind gust in $x$--direction hits the MAV. The wind increases from $0$ to $10 \si{\metre\per\second}$ and is modeled as stationary stochastic process as in equation \ref{eq:wind_state_space}. The state measurement is corrupted by noise.
+
+\begin{figure}
+\centering
+\subfloat[][{Position in 3D}]{
+\includegraphics{\folder/tikzfigures/helix_wind_3d_NMPC.tikz}
+\label{fig:nmpc_helix_3d}}
+\qquad
+\subfloat[][{Position top view}]{
+\includegraphics{\folder/tikzfigures/helix_wind_xy_NMPC.tikz}
+\label{fig:nmpc_helix_xy}}
+\caption{Helix experiment with a $10 \si{\metre\per\second}$ wind gust in $x$--direction for $5 \si{\metre} \leq z \leq 15 \si{\metre}$ and the NMPC}
+\label{fig:nmpc_helix}
+\end{figure}
+
+The NMPC only gets deflected by $3\si{\centi\metre}$ from the reference trajectory when the wind changes and returns to the reference within $3.5 \si{\second}$. 
