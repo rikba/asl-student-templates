@@ -142,11 +142,26 @@ The noise is directly forwarded to the control input. What has been a smooth con
 \end{figure}
 
 \subsubsection{Wind}
-The LQRI wind not explicitly modeled. Instead, it has to rely on the integral action to compensate wind. We run the following experiment:
+In the LQRI wind is not explicitly modeled. Instead, it has to rely on the integral action to compensate offset due to wind. We simulate the following experiment:
 
 The MAV has to climb up linearly from $0$ to $20 \si{\metre}$ at $0.15 \si{\metre\per\second}$ in a helix like manner. While climbing up it has to complete $4$ circles with a diameter of $4\si{metre}$. The whole experiment takes $1 \si{\minute}$. 
 
-From $5$ to $15 \si{\metre}$ height, a horizontal wind gust in $x$--direction hits the MAV. The wind increases from $0$ to $10 \si{\metre\per\second$ and is modeled as stationary stochastic process as in equation \ref{eq:wind_state_space}.
+From $5$ to $15 \si{\metre}$ height, a horizontal wind gust in $x$--direction hits the MAV. The wind increases from $0$ to $10 \si{\metre\per\second}$ and is modeled as stationary stochastic process as in equation \ref{eq:wind_state_space}. The state measurement is corrupted by noise.
+
+\begin{figure}
+\centering
+\subfloat[][{Position in 3D}]{
+\includegraphics{\folder/tikzfigures/helix_wind_3d_LQRI.tikz}
+\label{fig:lqri_helix_3d}}
+\qquad
+\subfloat[][{Position top view}]{
+\includegraphics{\folder/tikzfigures/helix_wind_xy_LQRI.tikz}
+\label{fig:lqri_helix_xy}}
+\caption{Helix experiment with a $10 \si{\metre\per\second}$ wind gust in $x$--direction for $5 \si{\metre} \leq z \leq 15 \si{\metre}$ and the LQRI}
+\label{fig:lqri_helix}
+\end{figure}
+
+In the top view \ref{fig:lqri_helix_xy} it is visible that the controller takes some time to compensate the wind. The Firefly deviates as much as $16 \si{\centi\metre}$ from the reference trajectory and takes about $5 \si{\second}$ to fully return to the reference.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % MPC
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -293,6 +308,7 @@ H &= \begin{bmatrix}
 \subsubsection{Weights}
 Weighting the cost function has been done iteratively, simulating step experiments and adjusting the weights until a desired performance was achieved.
 \subsubsection{Disturbance Model}
+\label{sec:mpc_dist}
 As Maeder states in \cite{Maeder2009}, the simplest way to achieve offset-free control is to set the number of disturbances equal the number of outputs, $n_d=n_y=10$. The disturbance matrices $B_d$ and $C_d$ then have to be chosen such that \ref{eq:mpc_obsv_cond} holds.
 
 A common way is to model the disturbance as output disturbance with $C_d=\mathbf{I}$ and $B_d= \mathbf{0}$. However, this is only possible, if the plant has no integrators, which our plant has.
@@ -314,8 +330,110 @@ T_{min} \leq T_{ref} \leq T_{max} \\
 \si{-30}{\degree} \leq \theta_{ref} \leq \si{30}{\degree}
 \end{align}
 
-\section{Simulation Results}
+\subsection{Simulation Results}
+For validation of the controller's quality, we simulate the same experiments as for the LQRI using the MATLAB simulator. First, we will determine the performance. Then we will check its ability to follow dynamic references. Next we will see how it reacts to measurement noise. Finally, a wind experiment is performed.
 
+\subsubsection{Performance}
+For performance examination, we run a noise-free step response experiment. The reference is set $1 \si{\metre}$ away from the MAV into $x$--direction. The MPC finds appropriate tilting and thrust signals for the multirotor to move to this position. Figure \ref{fig:mpc_step} depicts the outcome of this experiment.
+\begin{figure}
+\centering
+\subfloat[][{Position output}]{
+\includegraphics{\folder/tikzfigures/step_response_out_MPC.tikz}
+\label{fig:mpc_step_out}}
+\qquad
+\subfloat[][{Control input}]{
+\includegraphics{\folder/tikzfigures/step_response_in_MPC.tikz}
+\label{fig:mpc_step_in}}
+\caption{Unit step response for the MPC with the nominal model}
+\label{fig:mpc_step}
+\end{figure}
+
+In comparison to the LQRI the MPC is tuned more aggressively. In the first interval, the reference pitch is set to the maximum ($30\si{\degree}$ to accelerate into $x$--direction. Then, when the target is close enough, the pitch reference is reversed in order to come to a stop at $x=1\si{\metre}$.
+
+Hereby the linear control law is switched from the constrained to the unconstrained case. The unconstrained linear control law corresponds to the standard linear quadratic regulator law, as the final penalty has been chosen to be the solution of the algebraic Riccati equation.
+
+The step response has no overshoot, a $10$ to $90\si{\percent}$ rise time of $0.82 \si{\second}$ and a $2\si{\percent}$ settling time of $1.73 \si{\second}$. With this, it has a better performance than the LQRI.
+
+The controller achieves offset free tracking of constant references. Modeling errors are estimated as constant input disturbances as stated in chapter \ref{sec:mpc_dist}. The estimated disturbances are depicted in figure \ref{fig:mpc_step_dist}. Two things stand out.
+
+\begin{figure}
+\centering
+\includegraphics{\folder/tikzfigures/step_response_dist_MPC.tikz}
+\label{fig:mpc_step_dist}
+\caption{Disturbance estimation for the nominal unit step response of the MPC. $d_x$,$d_y$,$d_z$ in $[\si{\metre\per\second}]$, $d_{dx}$,$d_{dy}$,$d_{dz}$ in $[\si{\metre\per\second\per\second}]$, $d_\phi$,$d_\theta$ in $[\si{\radian\per\second}]$, $d_{1/8d\phi}$,$d_{1/8d\theta}$ in $[\si{\radian\per\second\per\second}]$}
+\end{figure}
+
+First, mostly disturbances in acceleration occur, e.g. $d_{dz}$. Physically, these disturbances are forces and moments acting on the MAV that are not modeled. For example in the first two seconds a relatively large disturbance force in $z$--direction is estimated, dragging the Firefly down. This disturbance comes from the drag force, which $z$--component is lost during linearization.
+
+Second, there is a constant remaining force into $z$--direction at steady-state. This force is then compensated by the controller and thus it achieves offset-free reference tracking.
+
+\subsubsection{Delay}
+To see, how well the MPC can deal with dynamic references, we run the sinusoid experiment as for the LQRI on a noise free plant. The Firefly has to go back and forth $1\si{\metre}$ twice within $6 \si{\second}$. The controller has knowledge about the next $N=40$ future reference positions and velocities and tries to minimize the distance to them. The resulting output is depicted in figure \ref{fig:mpc_sine}.
+
+The MAV catches up with the desired position and velocity already on the first segment and then follows the sine wave closely. Compared with the LQRI it has the advantage of looking $0.4\si{\second}$ into the future, adapting its inputs accordingly. 
+
+However, as the desired trajectory is quite demanding in terms of frequency, the MPC does not reach the full amplitude either. 
+
+\begin{figure}
+\centering
+\includegraphics{\folder/tikzfigures/sine_response_out_MPC.tikz}
+\caption{Sine trajectory experiment MPC}
+\label{fig:mpc_sine}
+\end{figure} 
+
+\subsubsection{Noise}
+To see the MPC's sensitivity to noise, we run the step experiment again, but this time the state measurement is delayed and disturbed by additive white noise. Figure \ref{fig:mpc_step_noisy} shows the response and control input. Figure \ref{fig:mpc_step_dist_noisy} shows the estimated constant disturbances for offset-free control.
+
+The measurement noise is entering the system in two ways. For one thing, the optimal control problem \ref{eq:mpc_opti} gets initialized with the current state estimation. And for another, the state measurement is used for estimating the disturbances \ref{eq:mpc_obsv_update}.
+
+Both effects have direct influence on the control input. As the MPC is tuned quite performance optimized, the noise leads to jerk, as the control input is scrambled \ref{fig:mpc_step_in_noisy}. However, the control target is still achieved \ref{fig:mpc_step_out_noisy} and no situations of instability have been observed.
+
+
+The disturbances, which should be zero as in the noise-free experiment \ref{fig:mpc_step_dist}, now show some significant reaction \ref{fig:mpc_step_dist_noisy}. The Luenberger observer gain $L$ governing the observer error dynamics \ref{eq:mpc_obsv_err} does not only lead to a relatively fast converging disturbance observer, but also introduces measurement noise to the estimation. Therefore the gain can not be chosen too large and in future works, a Kalman filter may be a better choice.
+
+To reduce the jerk effect in the response, the controller could be tuned less aggressive.
+
+\begin{figure}
+\centering
+\subfloat[][{Position output}]{
+\includegraphics{\folder/tikzfigures/step_response_out_MPC_noisy.tikz}
+\label{fig:mpc_step_out_noisy}}
+\qquad
+\subfloat[][{Control input}]{
+\includegraphics{\folder/tikzfigures/step_response_in_MPC_noisy.tikz}
+\label{fig:mpc_step_in_noisy}}
+\caption{Unit step response MPC with noisy state measurements}
+\label{fig:mpc_step_noisy}
+\end{figure}
+
+\begin{figure}
+\centering
+\includegraphics{\folder/tikzfigures/step_response_dist_MPC_noisy.tikz}
+\label{fig:mpc_step_dist_noisy}
+\caption{Disturbance estimation for the MPC's noisy step experiment}
+\end{figure}
+
+\subsubsection{Wind}
+Unlinke the LQRI, the MPC has wind feed-forward. We run the helix experiment with wind gust as above.
+
+The MAV has to climb up linearly from $0$ to $20 \si{\metre}$ at $0.15 \si{\metre\per\second}$ in a helix like manner. While climbing up it has to complete $4$ circles with a diameter of $4\si{metre}$. The whole experiment takes $1 \si{\minute}$. 
+
+From $5$ to $15 \si{\metre}$ height, a horizontal wind gust in $x$--direction hits the MAV. The wind increases from $0$ to $10 \si{\metre\per\second}$ and is modeled as stationary stochastic process as in equation \ref{eq:wind_state_space}. The state measurement is corrupted by noise.
+
+\begin{figure}
+\centering
+\subfloat[][{Position in 3D}]{
+\includegraphics{\folder/tikzfigures/helix_wind_3d_MPC.tikz}
+\label{fig:mpc_helix_3d}}
+\qquad
+\subfloat[][{Position top view}]{
+\includegraphics{\folder/tikzfigures/helix_wind_xy_MPC.tikz}
+\label{fig:mpc_helix_xy}}
+\caption{Helix experiment with a $10 \si{\metre\per\second}$ wind gust in $x$--direction for $5 \si{\metre} \leq z \leq 15 \si{\metre}$ and the MPC}
+\label{fig:mpc_helix}
+\end{figure}
+
+Even though, the wind measurements come with a delay of $0.1 \si{\second}$, the MPC is still a lot faster in compensating the drag due to the gust than the LQRI. The MPC controlled Firefly only deviates as much as $5\si{\centi\metre}$ from the reference trajectory, when the wind sets in \ref{fig:mpc_helix_xy}. Still it needs about $4\si{\seconds}$ to completely return to the reference.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % NMPC
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
