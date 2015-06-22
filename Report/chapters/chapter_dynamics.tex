@@ -1,6 +1,6 @@
 \chapter{Modeling}
 \label{sec:modeling}
-Multirotor flight position control essentially boils down to tilting the vehicle into the desired direction. Our position control therefore must find a reference attitude and thrust that makes the MAV move to the targeted positions. This reference attitude and thrust must be translated into reference motor rates by some attitude control. 
+Multirotors, as we consider them in this project, have fixed rotors that generate vertical thrust. Flight position control essentially boils down to tilting the vehicle into the desired direction. Our position control therefore must find a reference attitude and thrust that makes the MAV move to the targeted position. This reference attitude and thrust has to be translated into reference motor rates by some attitude control. 
 
 In this project we split these two tasks task by the means of a cascaded control approach (see figure \ref{pics:controller_sketch}). We will run the dynamically faster attitude and motor control at a high rate ($1000 \si{\hertz}$) in an inner loop and the high level position controller at $100 \si{\hertz}$ in an outer loop. 
 \begin{figure}
@@ -10,22 +10,43 @@ In this project we split these two tasks task by the means of a cascaded control
 \label{pics:controller_sketch}
 \end{figure}
 
-It simplifies the design of the position controller as only translational dynamics have to be considered explicitly and position control reduces to controlling the vehicles desired thrust and direction. 
+It simplifies the design of the position controller as only translational dynamics may be considered explicitly and position control reduces to controlling the vehicles desired thrust and direction. 
 
-In order for the vehicle to move to a reference position, the position controller computes the desired thrust force and roll, pitch, yaw angles. The inner loop then takes care of finding the appropriate moment applied to the vehicle body to archive the desired attitude. In this section the components from the control scheme in figure \ref{pics:controller_sketch} are modeled. 
+In order for the vehicle to move to a reference position, the position controller computes the desired thrust force and roll, pitch, yaw angles. The inner loop then takes care of finding the appropriate moment applied to the vehicle body to archive the desired attitude. 
 
-
-First the multirotor platform is described. Then a compilation of models is derived to build the complete model. It starts with a detailed model on the equations of motion (section \ref{sec:eq_of_motion}), which explicitly contain the influence of motor drag. Next a model for wind and wind forces is proposed (section \ref{sec:wind_model}). In section \ref{sec:sys_id} the attitude dynamics are evaluated through system identification. Finally all these models are summarized into a set of overall dynamics which will describe our control system.
+In this section the components from the control scheme in figure \ref{pics:controller_sketch} are modeled. First the multirotor platform is described. Then a compilation of models is derived to build the control system. It starts with a detailed model on the equations of motion (section \ref{sec:eq_of_motion}), which explicitly contain the influence of motor drag. Next a model for wind and wind forces is proposed (section \ref{sec:wind_model}). In section \ref{sec:sys_id} the attitude dynamics are evaluated through system identification. Finally all these models are summarized into a set of overall dynamics which will describe our control system.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Platform
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Platform}
-The AscTec Firefly (see figure \ref{pics:firefly}) is a hexacopter which is specifically designed for research purposes. While this is a hexacopter, the dynamics and controllers are generalized for any multirotor configuration. Here, a multirotor is a flying platform consisting of a body and a user specified arrangement of three or more rotors. Only configurations are considered which have all rotors lying fixed in a plane.
+The AscTec Firefly (see figure \ref{pics:firefly}) is a hexacopter which is specifically designed for research purposes. While this is a hexacopter, we will generalize the dynamics and controllers for any multirotor configuration. Here, a multirotor is a flying platform consisting of a body and a user specified arrangement of three or more rotors. Only configurations are considered which have all rotors lying fixed in a plane.
 
 In platforms with even-numbered motors, neighboring rotors typically rotate in opposite direction. This compensates yaw moments and gives control over heading. Tilting is accomplished by increasing the thrust on on one side of the vehicle and decreasing it on the opposite side.
 
-The Firefly has six $20 \si{\cm}$ diameter rotors equally aligned around the center. It is $60.5 \times 66.5 \times 16.5 \si{\cm}$ in size and weights $1.6 \si{\kg}$. The maximum thrust is $36 \si{\N}$ and it reaches a maximum airspeed of $15 \si{\metre\per\second}$.
+The Firefly has six $20 \si{\cm}$ diameter rotors equally aligned around the center. It is $60.5 \times 66.5 \times 16.5 \si{\cm}$ in size and weights $1.6 \si{\kg}$. The maximum thrust is $36 \si{\N}$ and it reaches a maximum airspeed of $15 \si{\metre\per\second}$. All parameters used in the simulation are summarized in table \ref{tab:firefly}.
+
+\begin{table}
+\begin{center}
+\caption{Vehicle parameters of the AscTec Firefly.}\vspace{1ex}
+\label{tab:firefly}
+\begin{tabular}{ll|cccc}
+\hline
+parameter  & symbol & unit             & value         \\ \hline \hline
+mass       & $m$    & $\si{\kilogram}$ & \num{1.627} \\
+arm length & $l$    & $\si{\metre}$    & \num{0.215}  \\
+rolling inertia & $I_{xx}$ & $\si{\kilogram\square\metre}$ & \num{3.48e-2} \\
+pitching inertia & $I_{yy}$ & $\si{\kilogram\square\metre}$ & \num{4.59e-2} \\
+yawing inertia & $I_{zz}$ & $\si{\kilogram\square\metre}$ & \num{9.78e-2} \\
+thrust constant & $C_T$ & $\si{\kilogram\metre\per\square\radian}$   & \num{5.59e-6}  \\
+drag constant & $C_D$ &  $\si{kilogram\per\radian}$        & \num{6.84e-5}  \\
+rolling moment constant & $C_R$ & $\si{\kilogram\metre\per\radian}$ & \num{0.00} \\
+drag moment constant & $C_M$ & $\si{\metre}$ & \num{1.60e-2} \\
+number rotors & $n$ & $1$ & \num{6} \\
+\hline
+\end{tabular}
+\end{center}
+\end{table}
 
 \begin{figure}
    \centering
@@ -34,7 +55,9 @@ The Firefly has six $20 \si{\cm}$ diameter rotors equally aligned around the cen
    \label{pics:firefly}
 \end{figure}
 
-It is provided with an inertial measurement unit (IMU) and has a efficient attitude controller onboard. In the experiment an external optical motion capture system by Vicon is used to feedback precise position information. A processor is taking care of online computation.
+It is provided with an inertial measurement unit (IMU) and has an efficient attitude controller onboard. In reality, an external optical motion capture system by Vicon is available for position feedback. In the simulation we will assume full state knowledge, which may be disturbed by measurement noise accordingly.
+
+For online computation, the hexacopter also has a powerful, yet limited Intel Core i7 CPU onboard. The derived position controller thus has to meet some computational constraints.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Equations of Motion
@@ -51,9 +74,21 @@ The multirotor is modeled as a rigid body with six degrees of freedom (DoF). It 
 In total three main reference frames are defined. 
 \begin{description}
 \item[1. World-fixed frame] Cartesian coordinate system $\mathcal{W}$ with $x$, $y$, $z$ pointing east, north, up, and with the origin at the MAV's initial position.
-\item[2. Orientation-fixed frame] Cartesian coordinate system $\mathcal{O}$ rotating world-fixed frame around the $z$-axis through the current heading of the MAV. 
+\item[2. Orientation-fixed frame] Cartesian coordinate system $\mathcal{O}$ created by rotating the world-fixed frame around the $z$-axis through the current heading of the MAV. 
 \item[3. Body-fixed frame] Cartesian coordinate system $\mathcal{B}$ oriented along the multirotor's body axes $x$, $y$, $z$ pointing forward, sidewards left, upwards in direction of thrust, and having the origin at the center of gravity and body's principal axes of inertia.
 \end{description}
+
+The coordinate frames are depicted in the hexacopter scheme \ref{fig:hexa}.
+
+
+\begin{figure}
+   \centering
+   \def\svgwidth{0.75\textwidth}
+   \input{images/hexa.pdf_tex}
+   \caption{Sketch of a hexacopter with the world-fixed frame $\mathcal{W}$, the orientation-fixed frame $\mathcal{O}$ and the body-fixed frame $\mathcal{B}$ and the individual thrust forces $F_{T,i}$ and the gravitational force $F_G$ acting on the body.}
+   \label{fig:hexa}
+\end{figure}
+
 
 \subsubsection{Notations}
 We denote vectors and matrices with a bold letter. A trailing calligraphic subscript on a vector denotes the corresponding coordinate frame $\mathcal{W}$, $\mathcal{O}$ or $mathcal{B}$. 
