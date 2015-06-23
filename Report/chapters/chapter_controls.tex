@@ -20,38 +20,55 @@ Given a discrete-time linear system with infinite-time quadratic cost
 x_{k+1} &= Ax_k + Bu_k \label{eq:lqr_system_x}\\
 J(u_0,u_1,...,u_\infty) &= \sum_{k=0}^\infty  x_k^TQx_k + u_k^TRu_k \label{eq:lqr_system_J}
 \end{align} 
-with $(\mathbf{A},\mathbf{B})$ stabilizable, $(\mathbf{A},\mathbf{G})$ with $\mathbf{Q}= \mathbf{G} \mathbf{G}^T$ controllable, weighting matrices $\mathbf{R}\succ0$ positive definite and $\mathbf{Q}\succeq0$ positive semi-definite, one can find a unique, stabilizing, linear state-feedback control law $u(k) = -\mathbf{K} x(k)$, that minimizes the quadratic cost.
-This law is found solving the discrete-time algebraic Riccati equation for $x$.
+with $(A,B)$ stabilizable, $(A,G)$ with $Q= G G^T$ controllable, weighting matrices $R\succ0$ positive definite and $Q\succeq0$ positive semi-definite, one can find a unique, stabilizing, linear state-feedback control law $u(k) = -{K} x(k)$, that minimizes the quadratic cost.
+This law is found solving the discrete-time algebraic Riccati equation (DARE) for $x$.
 \begin{align}
-\mathbf{A}^Tx\mathbf{A} - x - \mathbf{A}^T x \mathbf{B} \left( \mathbf{B}^T x \mathbf{B} + \mathbf{R} \right)^{-1} \mathbf{B}^T x \mathbf{A} + \mathbf{Q} = 0 \\
-\mathbf{K} = \left( \mathbf{B}^T x \mathbf{B} + \mathbf{R} \right)^{-1} \mathbf{B}^T x \mathbf{A}
+{A}^Tx{A}  - {A}^T x {B} \left( {B}^T x {B} + {R} \right)^{-1} {B}^T x^T {A} + {Q} = 0 \\
+{K} = \left( {B}^T x {B} + {R} \right)^{-1} {B}^T x {A}
 \end{align}
 
-For offset-free reference tracking the system \ref{eq:lqr_system_x} can be augmented by an integrator state $e$.
+For offset-free reference tracking the system \ref{eq:lqr_system_x} is augmented by an integrator state $e$.
 \begin{align}
-e(k+1) = e(k) + {T_s} \left( r(k) - \mathbf{H}x(k) \right) \label{eq:lqr_system_e}
+e_{k+1} = e_k + {T_s} \left( r_k - {H}x_k \right) \label{eq:lqr_system_e}
 \end{align}
-$r(k)$ is the reference to be tracked, $\mathbf{H}x(k)$ is the corresponding state and $T_s$ is the sampling time.
+$r_k$ is the reference to be tracked, ${H}x_k$ is the corresponding state and $T_s$ is the sampling time.
 
 More details on LQR/LQRI control, the solution of the algebraic Riccati equation, stability and tuning can be obtained in Anderson and Moore \cite{Anderson2007}.
 
 \subsection{Implementation}
-Having set up the linear state-space model \ref{eq:lin_sys_dt}--\ref{eq:lin_sys_y}, the LQRI formulation is almost obtained. The system has to be discretized (denoted with a bar) with respect the position control sampling time $Ts=0.01\si{\second}$ and augmented with an integrator state .We will not model the effects of wind. Here, the integrator has to compensate offsets due to wind. 
-
-In the general equations \ref{eq:lqr_system_x}, \ref{eq:lqr_system_J}, \ref{eq:lqr_system_e} we substitute the variables from our multirotor problem derived in the modeling section \ref{sec:modeling}.
+The proposed LQRI controller has been implemented in MATLAB. The controller gain matrix $\mathbf{K}$ is found using the function \texttt{lqi}, which takes as arguments the system equations and weighting matrices and solves the DARE. The gain needs to be established only once in the initialization. While the controller is running, the control input is found via
 \begin{align}
-\mathbf{A} & = \discrete{\mathbf{A}} \\
-\mathbf{B} & = \discrete{\mathbf{B}} \\
-x(k) &= \orientation{\mathbf{x}}(k) - \mathbf{x}_{\mathcal{O},ss}  \\
-u(k) &= \orientation{\mathbf{u}}(k) - \mathbf{u}_{\mathcal{O},ss} \label{eq:lqri_u}\\
-r(k) &= \mathbf{r}_{\mathcal{O},ref}(k) \\
-\mathbf{H} &= \begin{bmatrix}
+u(k) = \mathbf{K} x(k).
+\end{align}
+
+Since the position and velocity state estimations and reference position come in world-coordinates from the sensor fusion, these have to be transformed to orientation-fixed frame first, before applying the control law. Also the control input, which is according to the formulation \ref{eq:lqri_u} relative to the hovering input, needs to be transformed, before returning it to the system. Algorithm \ref{alg:lqri} illustrates the described simulation.
+
+The controller gain is obtained in the initialization phase. When calling the controller, the transformations into orientation-fixed frame are done, the control law is applied, the reference heading set to the desired heading and the calculated thrust input is transformed.
+\input{algorithms/lqri_control.tex}
+\subsubsection{System Dynamics}
+Having set up the linear state-space model \ref{eq:lin_sys_dt}--\ref{eq:lin_sys_y}, the LQRI formulation is almost obtained. The system has to be discretized with respect the position control sampling time $Ts=0.01\si{\second}$ and augmented with an integrator state .We will not model the effects of wind. Here, the integrator has to compensate offsets due to wind. 
+
+In the general equations \ref{eq:lqr_system_x}, \ref{eq:lqr_system_J}, \ref{eq:lqr_system_e} we substitute the variables from our multirotor problem derived in the modeling section \ref{sec:modeling}. The system matrices, inputs and states can be taken directly. As reference we take the desired position in orientation-fixed frame. The $H$ matrix is chosen accordingly.
+\begin{align}
+{A} &\gets {\mathbf{A}} \\
+{B} &\gets {\mathbf{B}} \\
+x_k &\gets \begin{bmatrix}
+{\mathbf{x}}_k - \mathbf{x}_{\mathcal{O},ss} \\
+e_k
+\end{bmatrix} \\
+u_k &\gets \orientation{\mathbf{u}}_k - \mathbf{u}_{\mathcal{O},ss} \label{eq:lqri_u}\\
+r_k &\gets \mathbf{r}_{\mathcal{O},ref,k} \\
+{H} &\gets \begin{bmatrix}
 \mathbf{0}_{3\times4} & \mathbf{I}_3 & \mathbf{0}_{3\times3}
 \end{bmatrix} 
 \end{align}
-An alternative approach could have been to linearize the system at every sample instant around the current state. However, this requires for the DARE to be solved at every instant. This is for example done at a high rate in rocket control by Cimen \cite{Cimen2008}.
 
-For reference tracking the error term $e(k)$ has to be minimized. This means, that we have to penalize it in the cost function. Because we want a fast response, we do not penalize the other states. On the other hand, we will apply some weight to the inputs in order to fulfill the criterion $\mathbf{R}\succ0$ and bound the inputs. Hence, after some adjustment, the following weighting matrices $\mathbf{Q} \in \mathbb{R}^{13\times13}$ and $\mathbf{R} \in \mathbb{R}^{3\times3}$ have been chosen for the Firefly. 
+\begin{remark}
+An alternative approach could have been to linearize the system at every sample instant about the current state instead about hovering. However, this requires for the DARE to be solved at every instant. This is for example done at a high rate in rocket control by Cimen \cite{Cimen2008}.
+\end{remark}
+
+\subsubsection{Weights}
+For reference tracking the error term $e_k$ has to be minimized. This means, that we have to penalize it in the cost function. Because we want a fast response, we do not penalize the other states. On the other hand, we will apply some weight to the inputs in order to fulfill the criterion ${R}\succ0$ and bound the inputs. Hence, after some adjustment, the following weighting matrices ${Q} \in \mathbb{R}^{13\times13}$ and ${R} \in \mathbb{R}^{3\times3}$ have been chosen for the Firefly. 
 \begin{align}
 \mathbf{Q} &= \begin{bmatrix}
 \mathbf{0}_{10\times10} & \mathbf{0}_{10\times3} \\
@@ -73,19 +90,14 @@ For reference tracking the error term $e(k)$ has to be minimized. This means, th
 %\end{bmatrix}
 %\end{align}
 
-The proposed LQRI controller has been implemented in MATLAB. The controller gain matrix $\mathbf{K}$ is found using the function \texttt{lqi}, which takes as arguments the system equations and weighting matrices and solves the discrete algebraic Riccati equation (DARE). The gain needs to be established only once in the initialization. While the controller is running, the control input is found via
-\begin{align}
-u(k) = \mathbf{K} x(k).
-\end{align}
 
-Since the position and velocity state estimations and reference position come in world-coordinates from the sensor fusion, these have to be transformed to orientation-fixed frame first, before applying the control law. Also the control input, which is according to the formulation \ref{eq:lqri_u} relative to the hovering input, needs to be transformed, before returning it to the system. Algorithm \ref{alg:lqri} illustrates the described simulation.
-\input{algorithms/lqri_control.tex}
+
 
 \subsection{Simulation Results}
 To validate the controller's quality, we perform various experiments using the MATLAB simulator proposed above. First, we will determine the performance. Then we will check its ability to follow dynamic references. Next we will see how it reacts to measurement noise. Finally, a wind experiment is performed.
 
 \subsubsection{Performance}
-In order to determine the performance of the LQRI, we run a noise free step experiment. The reference is set $1 \si{\metre}$ away from the MAV into $x$--direction. The LQRI then finds appropriate input signals for the multirotor to move to this position. Figure \ref{fig:lqri_step} depicts the outcome of this experiment.
+In order to determine the performance of the LQRI, we run a noise-free step experiment. The reference is set $1 \si{\metre}$ away from the MAV into $x$--direction. The LQRI then finds appropriate input signals for the multirotor to move to this position from hovering. Figure \ref{fig:lqri_step} depicts the outcome of this experiment.
 \begin{figure}
 \centering
 \subfloat[][{Position output}]{
@@ -95,18 +107,20 @@ In order to determine the performance of the LQRI, we run a noise free step expe
 \subfloat[][{Control input}]{
 \includegraphics{\folder/tikzfigures/step_response_in_lqri.tikz}
 \label{fig:lqri_step_in}}
-\caption{Unit step response LQRI}
+\caption{Simulated unit step response of the LQRI controlled Firefly. The MAV has to fly from hovering $1\si{\metre}$ ahead.}
 \label{fig:lqri_step}
 \end{figure}
 
 The step response shows a typical integrator action. It overshoots the targeted position but then settles to the desired value. The hexacopter has a $10$ to $90\si{\percent}$ rise time of $0.91 \si{\second}$ and a $2\si{\percent}$ settling time of $2.76 \si{\second}$. Also it overshoots about $7 \si{\centi\metre}$.
 
-The control inputs show typical LQRI behavior. In the first interval the multirotor pitches towards the desired target position. Then at some point on its way it pitches back into the opposite direction to slow down the MAV. This repeats until the integral error has diminished. For the thrust, in the first interval it loses some in order to pitch faster. Next the hexacopter accelerates slightly, before it eventually has settled and the thrust returns to steady-state.
+The control inputs \ref{fig:lqri_step_in} show typical LQRI behavior. In the first interval the multirotor pitches towards the desired target position. Then at some point on its way it pitches back into the opposite direction to slow down the MAV. This repeats until the integral error has diminished. 
 
-In the output \ref{fig:lqri_step_out} one can notice, that the MAV is slightly losing height in the driving phase from $0.5$ to $1.5 \si{\second}$. This could come from the fact, that the modeled rotor drag is lost in $z$--direction during linearization as it is higher order (see system matrix in \ref{eq:system_matrix}).
+The thrust is decreased in the first interval in order to pitch faster. Next the hexacopter increases the thrust slightly, before it eventually has settled and the thrust returns to steady-state.
+
+In the output \ref{fig:lqri_step_out} one can notice, that the MAV is slightly losing height in the driving phase from $0.5$ to $1.5 \si{\second}$. %This could come from the fact, that the modeled rotor drag is lost in $z$--direction during linearization as it is higher order (see system matrix in \ref{eq:system_matrix}).
 
 \subsubsection{Delay}
-In this experiment, we want to show the LQRI's behavior when opposed to changing references. Again we run a noise free experiment. This time the MAV has to go forwards and backwards $1\si{\metre}$ twice within $6 \si{\second}$, which corresponds to following a sine trajectory.
+In this experiment, we want to show the LQRI's behavior when opposed to non-constant references. Again we run a noise free experiment. This time the MAV has to go forwards and backwards $1\si{\metre}$ twice within $6 \si{\second}$, which corresponds to following a sine trajectory.
 
 One can observe two issues, when following the sine reference (see figure \ref{fig:lqri_sine}). First the MAV does not reach the full amplitude. Second it reaches its amplitude with some delay.
 
@@ -114,17 +128,17 @@ The multirotor not reaching the full amplitude comes from the rather ambitious r
 
 The second issue of having some delay comes on the one hand from the too slow close loop dynamics as stated before, and on the other hand from missing future knowledge. At every sample instant, the LQRI only knows, that it has to reach the very next reference point. In the infinite horizon optimal control problem, the solver assumes, that the MAV shall hover at this point. It does not know, that it has to keep going after reaching the position.
 
-One could reduce the latter problem of delay by giving some more information to the controller, e.g. feed a reference velocity.
+One could reduce the latter problem of delay by giving some more information to the controller, e.g. feed a reference velocity or have some other means of feed-forward control.
 
 \begin{figure}
 \centering
 \includegraphics{\folder/tikzfigures/sine_response_out_LQRI.tikz}
-\caption{Sine trajectory experiment LQRI}
+\caption{Simulated sine trajectory experiment  of the LQRI controlled Firefly. The MAV has to fly back and forth $1\si{\metre}$ starting from hovering. }
 \label{fig:lqri_sine}
 \end{figure} 
 
 \subsubsection{Noise}
-While the two experiments before have been noise free, in the real environment, the state measurement will always be corrupted by noise. Therefore, we will examine the effect of noise. We assume typical additive white noise and some delay on the states as proposed in the MATLAB simulator section \ref{sec:matlab_simulator}.
+While the two experiments before have been noise free, in the real environment, the state measurement will always be corrupted by noise. Therefore, we will examine the effect of noise. We assume typical additive white noise and some delay on the states as proposed in the MATLAB simulator section \ref{sec:matlab_simulator_noise}.
 
 We repeat the step experiment with additive noise about the position, velocity, angle and angular rate measurement. The magnitude is according to the Firefly's IMU and the Vicon specifications. The resulting step response with the according input can be seen in figure \ref{fig:lqri_step_noisy}.
 
@@ -139,14 +153,14 @@ The noise is directly forwarded to the control input. What has been a smooth con
 \subfloat[][{Control input}]{
 \includegraphics{\folder/tikzfigures/step_response_in_LQRI_noisy.tikz}
 \label{fig:lqri_step_in_noisy}}
-\caption{Unit step response LQRI with noisy state measurements}
+\caption{Unit step response LQRI with noisy state measurements.}
 \label{fig:lqri_step_noisy}
 \end{figure}
 
 \subsubsection{Wind}
 In the LQRI wind is not explicitly modeled. Instead, it has to rely on the integral action to compensate offset due to wind. We simulate the following experiment:
 
-The MAV has to climb up linearly from $0$ to $20 \si{\metre}$ at $0.15 \si{\metre\per\second}$ in a helix like manner. While climbing up it has to complete $4$ circles with a diameter of $4\si{metre}$. The whole experiment takes $1 \si{\minute}$. 
+The MAV has to climb up linearly from $0$ to $20 \si{\metre}$ at $0.15 \si{\metre\per\second}$ in a helix like manner. While climbing up it has to complete $4$ circles with a diameter of $4\si{\metre}$. The whole experiment takes $1 \si{\minute}$. 
 
 From $5$ to $15 \si{\metre}$ height, a horizontal wind gust in $x$--direction hits the MAV. The wind increases from $0$ to $10 \si{\metre\per\second}$ and is modeled as stationary stochastic process as in equation \ref{eq:wind_state_space}. The state measurement is corrupted by noise.
 
@@ -159,11 +173,13 @@ From $5$ to $15 \si{\metre}$ height, a horizontal wind gust in $x$--direction hi
 \subfloat[][{Position top view}]{
 \includegraphics{\folder/tikzfigures/helix_wind_xy_LQRI.tikz}
 \label{fig:lqri_helix_xy}}
-\caption{Helix experiment with a $10 \si{\metre\per\second}$ wind gust in $x$--direction for $5 \si{\metre} \leq z \leq 15 \si{\metre}$ and the LQRI}
+\caption{Helix experiment with a $10 \si{\metre\per\second}$ wind gust in $x$--direction for $5 \si{\metre} \leq z \leq 15 \si{\metre}$ and the LQRI.}
 \label{fig:lqri_helix}
 \end{figure}
 
-In the top view \ref{fig:lqri_helix_xy} it is visible that the controller takes some time to compensate the wind. The Firefly deviates as much as $16 \si{\centi\metre}$ from the reference trajectory and takes about $5 \si{\second}$ to fully return to the reference.
+The Firefly follows the helix reference precisely but with some delay, as expected.
+
+In the top view \ref{fig:lqri_helix_xy} it is visible that the controller takes some time to compensate the wind. The Firefly deviates as much as $16 \si{\centi\metre}$ from the reference trajectory and takes about $5 \si{\second}$ to fully return to the reference when the wind changes.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % MPC
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

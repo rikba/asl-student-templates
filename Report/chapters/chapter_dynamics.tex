@@ -456,6 +456,7 @@ The closed loop motor dynamics are modeled as first order systems with a smaller
 The MAV dynamics are modeled according to the dynamics section \ref{sec:dynamics}. They include rotor drag and rolling moments.
 
 \subsection{Noise}
+\label{sec:matlab_simulator_noise}
 In real world experiments, measurements are always uncertain. For some experiments we will have to add noise to the state measurements published by the simulator. The noise level we are picking are roughly on the level of the Firefly in the Vicon environment. There, the state is estimated based on the motion capture system measurements and the onboard IMU. The measurements are combined using the modular-sensor fusion framework developed by Lynen, Achtelik and Weiss \cite{Lynen2013}.
 
 The measurements are artificially disturbed with white noise with some variance as in equation \ref{eq:noise_measurement}. Additionally, they come delayed. The assumed variances and delays for position, velocity, euler angle and euler angle rate measurements are in table \ref{tab:noise}
