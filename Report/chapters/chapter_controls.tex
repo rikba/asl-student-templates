@@ -56,7 +56,7 @@ x_k &\gets \begin{bmatrix}
 {\mathbf{x}}_k - \mathbf{x}_{\mathcal{O},ss} \\
 e_k
 \end{bmatrix} \\
-u_k &\gets \orientation{\mathbf{u}}_k - \mathbf{u}_{\mathcal{O},ss} \label{eq:lqri_u}\\
+u_k &\gets {\mathbf{u}}_{\mathcal{O},k} - \mathbf{u}_{\mathcal{O},ss} \label{eq:lqri_u}\\
 r_k &\gets \mathbf{r}_{\mathcal{O},ref,k} \\
 {H} &\gets \begin{bmatrix}
 \mathbf{0}_{3\times4} & \mathbf{I}_3 & \mathbf{0}_{3\times3}
@@ -195,7 +195,7 @@ Disadvantageous about regular MPC is, that you can not give guarantees for stabi
 \subsection{Problem Formulation}
 We will present an offset-free, reference tracking, linear MPC scheme. Steady-state offset-free control for constant references is achieved by augmenting the system dynamics with a constant disturbance as proposed by Pannocchia and Rawlings and extended by Maeder \cite{Pannocchia2003a,Maeder2009}. The disturbance is estimated using a Luenberger observer. 
 
-Reference tracking is done by finding steady-state inputs and states, that are sufficient to meet the control target. The object of the OCP is to minimize the distance between all future states and inputs and their corresponding steady-state value. We choose a quadratic cost function. Note that all systems in this section are discrete-time with a sampling time of $T_s = 0.01\si{\second}$. 
+Reference tracking is done by finding steady-state inputs and states, that are sufficient to meet the control target. The object of the OCP is to minimize the distance between all future states and inputs and their corresponding steady-state value. We choose a quadratic cost function. E.g. $||\cdot||_Q^2$ denotes the weighted squared $2$--norm of a vector, with $Q$ being the weighting matrix. Note that all systems in this section are discrete-time with a sampling time of $T_s = 0.01\si{\second}$. 
 
 Augmenting the system with input and ouput disturbances $d_k$ and tracked measurement outputs $z_k$ we obtain an extended state-space model. The dimensions are $x\in\mathbb{R}^{n_x}$, $u\in\mathbb{R}^{n_u}$, $w\in\mathbb{R}^{n_w}$, $d\in\mathbb{R}^{n_d}$, $y\in\mathbb{R}^{n_y}$ and $z\in\mathbb{R}^{n_z}$. The system contains the wind feed-forward matrix $B_w$.
 \begin{align}
@@ -219,7 +219,7 @@ For our multirotor the open-loop optimal control problem formulates as following
 & & & x_0 = \hat x (t), \; d_0 = \hat d(t), \; w_0 = \hat w(t) \label{eq:mpc_opti}
 \end{align}
 
-As in the LQRI, we require $Q\succeq0$, $P\succeq0$ and $R\succ0$. We will choose $P$ to solve the DARE. This mimics unconstrained infinite horizon control at the end of the horizon and guarantees stability for the closed-loop linear system, if the terminal set is invariant. The wind and augmented disturbances are assumed constant.
+The system is constrained by the state equations and initial conditions. The state and input lie within the state respectively input space $\mathcal{X}$, $\mathcal{X}_f$, $\mathcal{U}$. As in the LQRI, we require $Q\succeq0$, $P\succeq0$ and $R\succ0$. We will choose $P$ to solve the DARE. This mimics unconstrained infinite horizon control at the end of the horizon and guarantees stability for the closed-loop linear system, if the terminal set is invariant. The wind and augmented disturbances are assumed constant.
 
 The steady-state targets $\bar{x}_t$ and $\bar{u}_t$ are calculated at every sampling time $t$, if possible for all $N$ future reference points. They are the solution of the following least-squares problem, which is established by solving system \ref{eq:MPC_dt} for $x_{k+1}=x_k=\bar{x}_t$, $u_k = \bar{u}_t$ and $z_k = r(t)$ with $r(t)$ being the current reference position and velocity. The inverse of the left-hand side matrix $M^{-1}$ can be obtained offline.
 \begin{align}
@@ -481,11 +481,13 @@ Even though, the wind measurements come with a delay of $0.1 \si{\second}$, the 
 % NMPC
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{NMPC} 
-Nonlinear MPC has the same principle as linear MPC. At every time step, a finite horizon open-loop optimal control problem is solved. The first input of the optimal input is applied to the system until the next sampling instant. Then the next finite horizon open-loop optimal control problem is solved.
+Nonlinear MPC follows the same principle as linear MPC. At every time step, a finite horizon open-loop optimal control problem is solved. The first input of the optimal control input is applied to the system until the next sampling instant. Then the next finite horizon open-loop optimal control problem is solved given the current state.
 
-Like MPC, NMPC can handle constrained systems, allowing the controller to push the system to the limits. Also, NMPC is naturally feed-forwarding, as it predicts the system states into the future and finds control inputs given this knowledge. 
+Like MPC, NMPC can handle constrained systems, allowing the controller to push the system to the limits and meet safety constraints. Also, NMPC is naturally feed-forwarding, as it predicts the system states into the future and finds control inputs given this knowledge. 
 
 Unlike MPC, however, the solution of the optimal control problem is not necessarily globally optimal. While linear MPC uses the advantages of convex optimization, the nonlinear counterpart is prone to local minima. Besides, guaranteeing stability for NMPC is more difficult. 
+
+In contrary to linear MPC, NMPC is applicable to nonlinear systems, which allows a greater state space and better modeling.
 
 An introduction to the topic can be found in Allgöwer and Johansen \cite{Allgower2004,Johansen2011}. More advanced strategies and future outlooks can be found in Findeisen's, Allgöwer's and Biegler's lecture notes on NMPC \cite{Findeisen2007}.
 
@@ -506,14 +508,17 @@ We consider the following continuous time optimal control problem (OCP).
 \end{align}
 $N$ is the time horizon, $T_s$ is the sampling time, $t$ is the current sampling instant time, $Q\succeq0$ is the state penalty, $R\succ0$ is the input penalty, $P\succeq0$ is the terminal state penalty, $f(\cdot)$ is the differential equation governing the system, $\mathcal{X}$ is the unconstrained state space, $\mathcal{U}$ is the constrained input space, $\hat{x}(t)$ is the state, $\hat{w}(t)$ the wind and $\hat{\psi}(t)$ the heading measurements at the current sampling instant.
 
+The states are governed by the system dynamics and its initial conditions, which are the current state measurements. The cost to be minimized is weighted quadratic and the target is to minimize the distance between a targeted reference state and input and the predicted counterparts.
+
 In order to achieve offset-free control at steady state, the state $x(t)$ is augmented with an integrator state $e(t)$.
 \subsection{Implementation}
 The NMPC is implemented using MATLAB. The solver to the OPC is generated offline using the ACADO toolkit. The solver is then called at every sample instant. The running program can be summarized into the following steps:
 
 \begin{enumerate}
-\item initialization: compute $P$, set warm start
+\item initialization: compute terminal penalty $P$, set warm start
 \item repeat at every sample time
 \begin{enumerate}
+\item set current state
 \item set online data (wind, heading)
 \item set reference
 \item set warm start
@@ -524,53 +529,57 @@ The NMPC is implemented using MATLAB. The solver to the OPC is generated offline
 \end{enumerate}
 \end{enumerate}
 \subsubsection{ACADO}
-For generating the solver we use the ACADO toolbox. The toolbox has a MATLAB interface that simplifies the creation. Vukov gives a good introduction to the solver \cite{Vukov2013}.The OCP \ref{eq:nmpc_opt_prob} is discretized using multiple shooting as presented by Bock \cite{bock1984multiple}. The discrete non-linear least square optimal control problem is then solved using a generalized Gauss-Newton method, which was elaborated by Bock as well \cite{Bock1983}. Diehl optimized this method for MPC. The real-time iteration (RTI) scheme \cite{Diehl2005} uses the control inputs and states from the previous optimization run as a new linearization point and following that only one Newton-iteration is necessary per sampling instant.
+For generating the solver for the OCP we use the ACADO toolbox. The toolbox has a MATLAB interface that simplifies the creation. It generates a hard-coded solver, that exploits the problem structure and hence gives great computational benefits. Vukov gives a good introduction to the solver and how to use it \cite{Vukov2013}. The manual helps to set the options \cite{www:acado}.
 
-ACADO supports different solvers for the discretized non-linear least square OCP. By default, ACADO uses the dense linear algebra solver qpOASES written by Ferreau \cite{Ferreau2014}. It uses a condensing based RTI scheme, which reduces the number of optimization variables and performs well for short prediction horizons.
+The OCP \ref{eq:nmpc_opt_prob} is discretized using multiple shooting as presented by Bock \cite{bock1984multiple}. The discrete non-linear least square optimal control problem is then solved using a generalized Gauss-Newton method, which was elaborated by Bock as well \cite{Bock1983}. Diehl optimized this method for MPC \cite{Diehl2005}. His real-time iteration (RTI) scheme  uses the control inputs and states from the previous optimization run as a new linearization point and following that only one Newton-iteration is necessary per sampling instant.
+
+ACADO supports different solvers for the discretized non-linear least squares OCP. By default, ACADO uses the dense linear algebra solver qpOASES written by Ferreau \cite{Ferreau2014}. It uses a condensing based RTI scheme, which reduces the number of optimization variables and performs well for short prediction horizons.
 
 In MPC long prediction horizons are desired. For our problem we will have $N=100$. A sparse quadratic program solution is more efficient. Recently Frasch released a new open-source sparse solver called qpDUNES \cite{Frasch}. It uses a mix of the structure exploitation of interior point methods and warm-starting capabilities of active set methods. The solving time for the hexacopter OCP \ref{eq:MPC_dt} was cut down to a half using the sparse solver instead of the condensed solver.
 
-Other solvers supported by ACADO are HPMPC by Frison \cite{www:hpmpc} and FORCES by Dimahidi \cite{www:forces}. They were not used because either they were not fully supported by the MATLAB interface or required a license.
+Other sparse solvers supported by ACADO are HPMPC by Frison \cite{www:hpmpc} and FORCES by Dimahidi \cite{www:forces}. They were not used because either they were not fully supported by the MATLAB interface or required a license.
 
-Further we optimized the ACADO solver settings to achieve a computation time as small as possible (see chapter). We use a second order implicit Runge-Kutta method for integration instead of a fourth order method, reduced the number of integrator iterations to two (5 by default) and used $N=100$ integrator steps.
+Further we optimized the ACADO solver settings to achieve a computation time as small as possible. We use a second order implicit Runge-Kutta method for integration instead of a fourth order method, reduced the number of integrator iterations to two (5 by default) and used $N=100$ integrator steps.
 
-The code for creating the solver is printed in listing \ref{code:acado}.
+The code for creating the solver is printed in listing \ref{code:acado} in the appendix.
 \subsubsection{System Dynamics}
-We can directly use the derived non-linear system dynamics \ref{eq:state_diff}. We will consider the positions and translational velocities in world-fixed coordinates and the angles and angular rates in orientation-fixed coordinates. The state however, is augmented by an integrator.
+We can directly use the derived non-linear system dynamics \ref{eq:state_diff} to set up the OCP. We will consider the positions and translational velocities in world-fixed coordinates and the angles and angular rates in orientation-fixed coordinates. The state however, is augmented by an integrator.
 \begin{align}
-x &= \begin{bmatrix}
+x &\gets \begin{bmatrix}
 \mathbf{x} \\
 \mathbf{e}
 \end{bmatrix} \\
-u &= \mathbf{u} \\
-w &= \mathbf{w} \\
-f(x(t),u(t)) &= \begin{bmatrix}
+u &\gets \mathbf{u} \\
+w &\gets \mathbf{w} \\
+f(x(t),u(t)) &\gets \begin{bmatrix}
 f(\mathbf{x},\mathbf{u},\mathbf{w}) \\
 \ddt \mathbf{e}
 \end{bmatrix} \label{eq:ocp_dyn}
 \end{align}
-The dynamics of the wind and the heading are actually not modeled as in the OCP \ref{eq:nmpc_opt_prob}, but rather fed to the NMPC as a constant $N\times4$ array. This can be done in ACADO using the \texttt{OnlineData} data type.
+The constant dynamics of the wind and the heading are actually not modeled as in the OCP \ref{eq:nmpc_opt_prob}, but rather fed to the NMPC as a constant $N\times4$ array. This can be done in ACADO using the \texttt{OnlineData} data type.
 
-In the code generation \ref{code:acado} the system dynamics are explicitly separated into purely linear attitude dynamics and non-linear translational and error dynamics. Acado takes advantage of this structure as explained by Quirynen \cite{Quirynen2013}. The solving time has been reduced significantly $(2\si{\milli\second})$ for this problem when using the linear subsystem exploitation.
+In the code generation \ref{code:acado} the system dynamics are explicitly separated into purely linear attitude dynamics and non-linear translational and error dynamics. Acado takes advantage of this structure as explained by Quirynen \cite{Quirynen2013}. The solving time has been reduced significantly (about $2\si{\milli\second}$) for this problem when using the linear subsystem exploitation.
 \subsubsection{Integrator}
+To achieve offset-free control we augmented the state with an integrator, which integrates the error between desired position and actual position. Adding an integrator to the problem has several disadvantages, though. The performance is reduced, it can cause instability and it causes overshoot. In future works one could augment the system with a constant disturbance and a state estimator instead as it has been done for the MPC. Maeder developed some theory for this \cite{MorM_d:2012:IFA_4475}.
+
 The integrator follows the dynamics
 \begin{align}
-\ddt \mathbf{e}_{real}(\tau) &= \mathbf{r}_{ref} - \mathbf{r(\tau)},  \label{eq:e_dt} \\
-e_{real}(t) &= e_{real}(t), \nonumber\\
+\ddt \mathbf{e}_{real}(\tau) &= \mathbf{r}_{ref}(\tau) - \mathbf{r}(\tau),  \label{eq:e_dt} \\
+\mathbf{e}_{real}(t) &= \mathbf{e}_{real}(t), \nonumber\\
 -e_{max} \mathbf{1} &\leq e_{real}(t) \leq e_{max}  \mathbf{1} \nonumber.
 \end{align}
-It is limited by the upper and lower value $e_{max}=0.2$ in order to prevent the system from wind-up. However, this constraint can not straight forward be implemented in the ACADO differential equation. 
+The real subscript denotes, that this is the integrator that is updated at every sample time step $t$. It is limited by the upper and lower value $e_{max}=0.05$ in order to prevent the system from wind-up. However, this constraint can not straight forward be implemented in the ACADO differential equation.  
 
-If it was just set as a constraint, the problem immediately goes infeasible, if the set point is to far away from the current position. Imagine for example the MAV being away $x_{ref}-x(t) = 1 \si{\metre}$ away from the reference position. If the MAV can not make it to the reference within the prediction horizon, the integral term will strictly monotonously grow, exceed the maximum value, and the optimization problem is infeasible.
+If it was just set as a state constraint, the problem immediately goes infeasible, if the set point is to far away from the current position. Imagine for example the MAV being away $x_{ref}(t)-x(t) = 1 \si{\metre}$  from the reference position. If the MAV can not make it to the reference within the prediction horizon, the integral term will strictly monotonously grow, exceed the maximum value, and the optimization problem is infeasible.
 
-To prevent this, we do not constraint the error term hard, but rather window its differential equation. If the error term is outside the boundary, the growth will be set to zero. We impose a rectangular window on the error function \ref{eq:e_dt}. Because a rectangular window function is discontinuous, we will rather approximate the step functions generating the window by a combination of logistic functions \ref{eq:logistics_window}. Such a window is depicted in figure \ref{fig:logistics_window}.
+To prevent this, we do not constraint the error term hard, but rather window its differential equation. If the error term is outside the boundary, the growth will be set to zero. We impose a rectangular window on the error function \ref{eq:e_dt}. Because a rectangular window function is discontinuous and non-differentiable, we will rather approximate the step functions generating the window by a combination of logistic functions \ref{eq:logistics_window}. Such a window is depicted in figure \ref{fig:logistics_window}.
 \begin{align}
 W(e_x) &= \frac{L}{1+\exp{(-k(e_x+e_{max}))}}  - \frac{L}{1+\exp{(-k(e_x-e_{max}))}}\label{eq:logistics_window}
 \end{align}
 \begin{figure}
 \centering
 \includegraphics{\folder/tikzfigures/window.tikz}
-\caption{Approximated rectangular window as combination of logistics functions with $e_{max}=\num{0.05}$, $L=1$, $k=\num{e2}$}
+\caption{Approximated rectangular window as combination of logistics functions with $e_{max}=\num{0.05}$, $L=1$, $k=\num{e2}$.}
 \label{fig:logistics_window}
 \end{figure}
 Thus, the integrator dynamics in \ref{eq:ocp_dyn} are modeled for the non-linear OCP:
@@ -580,11 +589,11 @@ W(e_x(\tau)) & 0 & 0 \\
 0 & W(e_y(\tau)) & 0 \\
 0 &  0 & W(e_z(\tau))
 \end{bmatrix}
-\left(\mathbf{r}_{ref} - \mathbf{r(\tau)} \right), \\
+\left(\mathbf{r}_{ref}(\tau) - \mathbf{r}(\tau) \right), \\
 \mathbf{e}(t) &= \mathbf{e}_{real}(t) \nonumber.
 \end{align}
 \subsubsection{Reference}
-The reference $x_{ref}$ inputted into the acado solver consists of an $N+1\times13$ array which is updated at every sample instant with the very next desired position and if possible all next $N$ future reference positions and velocities. With the controller having knowledge about the desired future position and velocity, feedforward is granted. If they are not known, the position reference will just be constant over the whole prediction horizon and the velocity reference will be set to zero. 
+The reference $x_{ref}$ inputted into the acado solver consists of an $N+1\times13$ array which is updated at every sample instant with the very next desired position and if possible all next $N+1$ future reference positions and velocities. With the controller having knowledge about the desired future position and velocity, feedforward is granted. If they are not known, the position reference will just be constant over the whole prediction horizon and the velocity reference will be set to zero. 
 
 The reference attitude is set to zero, which causes some "damping", depending on the weight on the attitude error term. The integrator reference is set to zero, to make the system drive the integrator to zero.
 \begin{align}
@@ -641,7 +650,7 @@ A^TP+PA-PBB^TP+Q=0\label{eq:care}
 \end{align}
 While this is not totally correct, as the linearized system uses an orientation-fixed coordinate system for the translational dynamics, it still gives an approximation for the infinite horizon OCP solution at the final time step.
 \subsubsection{Constraints}
-Again, we will only use input constraints. We want to keep the attitude bounded, such that it does not diverge too much from the linearization point (our attitude dynamics are still linearized around hovering) or even gets into regions of singular Euler angles. And we limit the thrust within the capable regions given by the motors (see equations \ref{eq:T_min} and \ref{eq:T_max}. However, we allow a little more tilt than in the linear MPC.
+Again as in the linear MPC, we will only use input constraints. We want to keep the attitude bounded, such that it does not diverge too much from the linearization point (our attitude dynamics are still linear) or even gets into regions of singular Euler angles. And we limit the thrust within the capable regions given by the motors (see equations \ref{eq:T_min} and \ref{eq:T_max}). However, we allow a little more tilt than in the linear MPC.
 
 \begin{align}
 T_{min} \leq T_{ref} \leq T_{max} \\
@@ -667,32 +676,32 @@ For performance examination, we run a noise-free step response experiment. The r
 \subfloat[][{Control input}]{
 \includegraphics{\folder/tikzfigures/step_response_in_NMPC.tikz}
 \label{fig:nmpc_step_in}}
-\caption{Unit step response for the NMPC with the nominal model}
+\caption{Simulated unit step response of the NMPC controlled Firefly. The MAV has to fly from hovering $1\si{\metre}$ ahead.}
 \label{fig:nmpc_step}
 \end{figure}
 
-Like the MPC, the NMPC tilts towards the target hitting the constraints of $45\si{\degree}$, and then reverses the direction to slow down. The NMPC is tuned more aggressive, such that it has a more bang-bang like control input. 
+Like the MPC, the NMPC tilts towards the target hitting the pitching constraints of $45\si{\degree}$, and then reverses the direction of thrust to slow down. The NMPC is tuned more aggressive, such that it has a more bang-bang like control input. 
 
-Due to its integral part, the MAV overshoots the setting point by $7\si{\centi\metre}$ and then settles down to the steady-state value. It achieves the fastest $10$ to $90\si{\percent}$ rise time of $0.46 \si{\second}$, but has due to its integrator only a $2\si{\percent}$ settling time of $1.71 \si{\second}$, which is about the MPC settling time.
+Due to its integral part, the MAV overshoots the setting point by $7\si{\centi\metre}$ and then settles down to the steady-state value. It achieves the fastest $10$ to $90\si{\percent}$ rise time of all controllers ($0.46 \si{\second}$). However, due to its integrator it only a $2\si{\percent}$ settling time of $1.71 \si{\second}$, which is about the MPC settling time.
 
 \subsubsection{Delay}
-Like the MPC, the NMPC has feed-forward capacities and thus is able to follow dynamic trajectories without delay. We repeat the sinusoid experiment in which the Firefly has to go back and forth $1\si{\metre}$ twice within $6 \si{\second}$. The controller has knowledge about the next $N=100$ ($1\si{\second}$) future reference positions and velocities and tries to minimize the distance to them. The resulting output is depicted in figure \ref{fig:nmpc_sine}.
+Like the MPC, the NMPC has feed-forward capacities and thus is able to follow dynamic trajectories without delay. We repeat the sinusoid experiment in which the Firefly has to go back and forth $1\si{\metre}$ twice within $6 \si{\second}$. The controller has knowledge about the next $N=100$ (which corresponds to $1\si{\second}$) future reference positions and velocities and tries to minimize the distance to them. The resulting output is depicted in figure \ref{fig:nmpc_sine}.
 
-The MAV has to catch up with the reference position and then follows the reference quite closely. Due to its faster rise time, the NMPC performs best in reaching the target amplitude.
+The MAV has to catch up with the reference position and then follows the reference quite closely. Due to its faster rise time, the NMPC performs best of all controllers in reaching the target amplitude.
 
 \begin{figure}
 \centering
 \includegraphics{\folder/tikzfigures/sine_response_out_NMPC.tikz}
-\caption{Sine trajectory experiment NMPC}
+\caption{Simulated sine trajectory experiment  of the NMPC controlled Firefly. The MAV has to fly back and forth $1\si{\metre}$ starting from hovering.}
 \label{fig:nmpc_sine}
 \end{figure} 
 
 \subsubsection{Noise}
 While the NMPC is the fastest proposed controller, it is not more sensitive to noise than the MPC controller. Again we run the step experiment augmented with measurement noise and delay, now with the NMPC. Figure \ref{fig:nmpc_step_noisy} shows the response and control input. 
 
-The measurement noise is entering the system in the initialization of the OCP \ref{eq:nmpc_opt_prob}. The noise leads to significant jumps in the input signal \ref{fig:nmpc_step_in_noisy}. The control target, however, is still being reached and the NMPC has not faces instability in any experiment.
+The measurement noise is entering the system in the initialization of the OCP \ref{eq:nmpc_opt_prob}. The noise leads to significant jumps in the input signal \ref{fig:nmpc_step_in_noisy}. The control target, however, is still being reached and the NMPC has not faced instability in any experiment.
 
-Still one should consider increasing the penalties on the input \ref{eq:nmpc_input_penalty} taking the controller to the real world.
+Still one should consider increasing the penalties on the input \ref{eq:nmpc_input_penalty} taking the controller to the real world. Especially, because in outside experiments the measurement noise will be much larger. Increasing the input penalty will lower the controller gain and thereby lower the effects of noise.
 
 \begin{figure}
 \centering
@@ -709,11 +718,11 @@ Still one should consider increasing the penalties on the input \ref{eq:nmpc_inp
 
 
 \subsubsection{Wind}
-Like the MPC, the NMPC has wind feed-forward capabilities. We run the helix experiment with wind gust as above.
+Like the MPC, the NMPC has wind feed-forward capabilities. The wind is modeled explicitly as part of the rotor drag force in the state equations. The controller takes the current wind measurement and assumes it constant over the next OCP prediction horizon.
 
-The MAV has to climb up linearly from $0$ to $20 \si{\metre}$ at $0.15 \si{\metre\per\second}$ in a helix like manner. While climbing up it has to complete $4$ circles with a diameter of $4\si{metre}$. The experiment's total time is $1 \si{\minute}$. 
+We run the helix experiment with wind gust as above. The MAV has to climb up linearly from $0$ to $20 \si{\metre}$ at $0.15 \si{\metre\per\second}$ in a helix like manner. While climbing up it has to complete $4$ circles with a diameter of $4\si{\metre}$. The experiment's total time is $1 \si{\minute}$. 
 
-From $5$ to $15 \si{\metre}$ height, a horizontal wind gust in $x$--direction hits the MAV. The wind increases from $0$ to $10 \si{\metre\per\second}$ and is modeled as stationary stochastic process as in equation \ref{eq:wind_state_space}. The state measurement is corrupted by noise.
+From $5$ to $15 \si{\metre}$ height, a horizontal wind gust in $x$--direction hits the MAV. The wind increases from $0$ to $10 \si{\metre\per\second}$ and comes as stationary stochastic process as in equation \ref{eq:wind_state_space}. The state and wind measurement is corrupted by noise and delay.
 
 \begin{figure}
 \centering
@@ -724,8 +733,10 @@ From $5$ to $15 \si{\metre}$ height, a horizontal wind gust in $x$--direction hi
 \subfloat[][{Position top view}]{
 \includegraphics{\folder/tikzfigures/helix_wind_xy_NMPC.tikz}
 \label{fig:nmpc_helix_xy}}
-\caption{Helix experiment with a $10 \si{\metre\per\second}$ wind gust in $x$--direction for $5 \si{\metre} \leq z \leq 15 \si{\metre}$ and the NMPC}
+\caption{Helix experiment with a $10 \si{\metre\per\second}$ wind gust in $x$--direction for $5 \si{\metre} \leq z \leq 15 \si{\metre}$ and the NMPC. The wind and state measurements are corrupted by noise and delay.}
 \label{fig:nmpc_helix}
 \end{figure}
 
-The NMPC only gets deflected by $3\si{\centi\metre}$ from the reference trajectory when the wind changes and returns to the reference within $3.5 \si{\second}$. 
+The NMPC controlled Firefly manages to follow the reference trajectory very precisely. As mentioned in the sine trajectory experiment, it takes advantage of predicting future states and knowing future reference positions and velocities. Also shows offset-free tracking.
+
+The moment the wind gust sets in or settles respectively, the Firefly only gets deflected by $3\si{\centi\metre}$ from the reference trajectory. This becomes evident in the top view \ref{fig:nmpc_helix_xy}. The MAV not only gets deflected the least, but also returns to the reference the fastest.%when the wind changes and returns to the reference within $3.5 \si{\second}$. 
