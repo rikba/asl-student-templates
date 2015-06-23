@@ -190,6 +190,8 @@ At every sampling time step $t$ a $N$--step open-loop optimal control problem (O
 
 The main advantage of model predictive control is the incorporation of constraints on inputs and states. This allows you to meet safety constraints and at the same time push the system to the limits. Second, due to its predictive nature, the controller has automatic feed-forward behavior. Given the OCP is convex, e.g. linear system, quadratic cost and box constraints, very efficient solvers are available which can calculate the solution online. The solution is optimal with respect to the formulation. Additionally, linear MPC has some advances in theory, like stability guarantees and offset-free control. Given a linear system, the control problem is straight forward to set up.
 
+Disadvantageous about regular MPC is, that you can not give guarantees for stability in cases of disturbance noise and model errors, like you can for robust control techniques. This makes the method very depending on a good model.
+
 \subsection{Problem Formulation}
 We will present an offset-free, reference tracking, linear MPC scheme. Steady-state offset-free control for constant references is achieved by augmenting the system dynamics with a constant disturbance as proposed by Pannocchia and Rawlings and extended by Maeder \cite{Pannocchia2003a,Maeder2009}. The disturbance is estimated using a Luenberger observer. 
 
@@ -481,7 +483,7 @@ Even though, the wind measurements come with a delay of $0.1 \si{\second}$, the 
 \section{NMPC} 
 Nonlinear MPC has the same principle as linear MPC. At every time step, a finite horizon open-loop optimal control problem is solved. The first input of the optimal input is applied to the system until the next sampling instant. Then the next finite horizon open-loop optimal control problem is solved.
 
-Like MPC, NMPC can handle constraint systems, allowing the controller to push the system to the limits. Also, NMPC is naturally feed-forwarding, as it predicts the system states into the future and finds control inputs given this knowledge. 
+Like MPC, NMPC can handle constrained systems, allowing the controller to push the system to the limits. Also, NMPC is naturally feed-forwarding, as it predicts the system states into the future and finds control inputs given this knowledge. 
 
 Unlike MPC, however, the solution of the optimal control problem is not necessarily globally optimal. While linear MPC uses the advantages of convex optimization, the nonlinear counterpart is prone to local minima. Besides, guaranteeing stability for NMPC is more difficult. 
 
