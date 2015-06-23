@@ -4,19 +4,21 @@ The cascaded multirotor control with decoupled attitude and position control as 
 
 Bouabdallah formulated integral backstepping and sliding mode control \cite{Bouabdallah2005,Bouabdallah2007}. Lee developed a geometric tracking control \cite{Lee2010}. Hoffmann et. al. used PID control for their STARMAC quadrotor \cite{Hoffmann2007}. Robust $H_\infty$ control gives the ability guarantee stability even with model uncertainties. E.g. Felix Bergenkamp used Gaussian learning to determine uncertainty and then used $H_\infty$ to control a quadrotor \cite{Berkenkamp2014,www:robustquad}. Model predictive control schemes become more spread in multirotor control. Tzes, Nikolakopoulos and Alexis build a full linear MPC for a quadrotor \cite{Tzes2012}. Burri developed a decoupled MPC for position control \cite{Burri2012}. 
 
-We decide to go with the mathematical optimization techniques and will derive a LQR with integrator, a linear offset-free MPC and a nonlinear MPC with integrator for general multirotor platforms. The algorithms will then be tested in the proposed MATLAB simulator and compared.
+We decide to go with the mathematical optimization techniques and will derive a LQR with integrator, a linear offset-free MPC and a nonlinear MPC with integrator for general multirotor platforms. 
+
+In this section, the advantages and disadvantages of the proposed controllers will be stated. Then the general problem formulation is presented and how it is adapted to our problem. The algorithms will then be tested in the proposed MATLAB simulator and compared.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % LQRI
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{LQRI} 
-LQR is a mathematical optimization based control technique for linear control systems with quadratic cost functions. The controller is straight forward to tune, easy applicable for multiple input multiple output (MIMO), guarantees stability for the given linearized system and is optimal with respect to the system representation and cost function. Further, the gain matrix $\mathbf{K}$ can be computed offline, such that applying the control law reduces to a simple matrix multiplication.
+LQR is a mathematical optimization based control technique for linear control systems with quadratic cost functions. The controller is straight forward to tune, easy applicable for multiple input multiple output (MIMO), guarantees stability for the given linearized system and is optimal with respect to the system representation and cost function. Further, the gain matrix $K$ can be computed offline, such that applying the control law reduces to a simple matrix multiplication.
 
 \subsection{Problem Formulation}
 Given a discrete-time linear system with infinite-time quadratic cost
 \begin{align}
-x(k+1) &= \mathbf{A}x(k) + \mathbf{B}u(k) \label{eq:lqr_system_x}\\
-J(u(0),u(1),...,u(\infty)) &= \sum_{k=0}^\infty  x(k)^T\mathbf{Q}x(k) + u(k)^T\mathbf{R}u(k) \label{eq:lqr_system_J}
+x_{k+1} &= Ax_k + Bu_k \label{eq:lqr_system_x}\\
+J(u_0,u_1,...,u_\infty) &= \sum_{k=0}^\infty  x_k^TQx_k + u_k^TRu_k \label{eq:lqr_system_J}
 \end{align} 
 with $(\mathbf{A},\mathbf{B})$ stabilizable, $(\mathbf{A},\mathbf{G})$ with $\mathbf{Q}= \mathbf{G} \mathbf{G}^T$ controllable, weighting matrices $\mathbf{R}\succ0$ positive definite and $\mathbf{Q}\succeq0$ positive semi-definite, one can find a unique, stabilizing, linear state-feedback control law $u(k) = -\mathbf{K} x(k)$, that minimizes the quadratic cost.
 This law is found solving the discrete-time algebraic Riccati equation for $x$.

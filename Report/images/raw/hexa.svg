@@ -648,11 +648,11 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="5.6"
-     inkscape:cx="152.37941"
-     inkscape:cy="69.417575"
+     inkscape:zoom="1.979899"
+     inkscape:cx="93.272882"
+     inkscape:cy="94.044727"
      inkscape:document-units="px"
-     inkscape:current-layer="layer1"
+     inkscape:current-layer="g4009"
      showgrid="false"
      units="mm"
      inkscape:window-width="1366"
@@ -918,7 +918,7 @@
              sodipodi:role="line"
              id="tspan9018"
              x="137.84386"
-             y="324.11694">$F_{T,1}$</tspan></text>
+             y="324.11694">$F_{1}$</tspan></text>
         <text
            xml:space="preserve"
            style="font-size:10px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Liberation Sans;-inkscape-font-specification:Sans Bold"
@@ -930,7 +930,7 @@
              sodipodi:role="line"
              id="tspan9018-2"
              x="84.816872"
-             y="338.04028">$F_{T,2}$</tspan></text>
+             y="338.04028">$F_{2}$</tspan></text>
         <text
            xml:space="preserve"
            style="font-size:10px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Liberation Sans;-inkscape-font-specification:Sans Bold"
@@ -942,7 +942,7 @@
              sodipodi:role="line"
              id="tspan9018-1"
              x="82.138298"
-             y="391.07599">$F_{T,3}$</tspan></text>
+             y="391.07599">$F_{3}$</tspan></text>
         <text
            xml:space="preserve"
            style="font-size:10px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Liberation Sans;-inkscape-font-specification:Sans Bold"
@@ -954,7 +954,7 @@
              sodipodi:role="line"
              id="tspan9018-3"
              x="166.78114"
-             y="429.11169">$F_{T,4}$</tspan></text>
+             y="429.11169">$F_{4}$</tspan></text>
         <text
            xml:space="preserve"
            style="font-size:10px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Liberation Sans;-inkscape-font-specification:Sans Bold"
@@ -966,7 +966,7 @@
              sodipodi:role="line"
              id="tspan9018-8"
              x="224.81686"
-             y="410.8974">$F_{T,5}$</tspan></text>
+             y="410.8974">$F_{5}$</tspan></text>
         <text
            xml:space="preserve"
            style="font-size:10px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Liberation Sans;-inkscape-font-specification:Sans Bold"
@@ -978,7 +978,7 @@
              sodipodi:role="line"
              id="tspan9018-9"
              x="213.20973"
-             y="360.00455">$F_{T,6}$</tspan></text>
+             y="360.00455">$F_{6}$</tspan></text>
         <text
            xml:space="preserve"
            style="font-size:10px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Liberation Sans;-inkscape-font-specification:Sans Bold"
