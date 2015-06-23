@@ -184,14 +184,18 @@ In the top view \ref{fig:lqri_helix_xy} it is visible that the controller takes 
 % MPC
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{MPC} 
-Model predictive control is an effective control technique to deal with multivariable constraint control problems. Instead of solving an infinite horizon optimal control problem like LQR, MPC solves a finite horizon problem in a repeated fashion. At every sampling time step $k$ a $N$--step open-loop optimal control problem is solved. The solution of the first step is then applied as a control input $u(k)$ and the rest is dismissed. At the next time step $k+1$ the problem is initialized with the current state $x(k+1)$ and the open-loop optimal control procedure is repeated to find $u(k+1)$. This iterative control technique is also referred to as receding horizon control (RHC). An introduction on the topic and theory can be found in Morari's and Lee's essay \cite{Morari1999} or Maciejowski's book \cite{Maciejowski2002}.
+Model predictive control is an effective control technique to deal with multivariable constrained control problems. Instead of solving an infinite horizon optimal control problem like LQR, MPC solves a finite horizon problem in a repeated fashion. 
 
-The main advantage of model predictive control is the incorporation of constraints on inputs and states. This allows you to push the system to the limits and thus a fast control. Second, due to its predictive nature, the controller has automatic feed-forward behavior. Given the problem is convex, e.g. linear system, quadratic cost and box constraints, very efficient solvers are available and the solution is optimal with respect to the formulation. Additionally linear MPC has some advances in theory, like stability guarantees and offset-free control.
+At every sampling time step $t$ a $N$--step open-loop optimal control problem (OCP) is solved. The solution of the first step is then applied as a control input $u_t$ and the rest is dismissed. At the next time step $t+T_s$ the problem is initialized with the current state $x_{t+T_s}$ and the open-loop optimal control procedure is repeated to find $u_{t+T_s}$. This iterative control technique is also referred to as receding horizon control (RHC). An introduction on the topic and theory can be found in Morari's and Lee's essay \cite{Morari1999} or Maciejowski's book \cite{Maciejowski2002}.
+
+The main advantage of model predictive control is the incorporation of constraints on inputs and states. This allows you to meet safety constraints and at the same time push the system to the limits. Second, due to its predictive nature, the controller has automatic feed-forward behavior. Given the OCP is convex, e.g. linear system, quadratic cost and box constraints, very efficient solvers are available which can calculate the solution online. The solution is optimal with respect to the formulation. Additionally, linear MPC has some advances in theory, like stability guarantees and offset-free control. Given a linear system, the control problem is straight forward to set up.
 
 \subsection{Problem Formulation}
-We will present an offset-free, reference tracking, linear MPC scheme. Steady-state offset-free control for constant references is achieved by augmenting the state dynamics with a constant disturbance as proposed by Pannocchia and Rawlings and extended by Maeder \cite{Pannocchia2003a,Maeder2009}. The disturbance is estimated using a Luenberger Observer. Reference tracking is done by finding steady-state inputs and states, that are sufficient to meet the control target. The optimization will then try to find a control input to minimize the distance between the states and inputs and their corresponding steady-state value. We choose a quadratic cost function. Note that all systems in this section are discrete time. 
+We will present an offset-free, reference tracking, linear MPC scheme. Steady-state offset-free control for constant references is achieved by augmenting the system dynamics with a constant disturbance as proposed by Pannocchia and Rawlings and extended by Maeder \cite{Pannocchia2003a,Maeder2009}. The disturbance is estimated using a Luenberger observer. 
 
-Augmenting the system with input and ouput disturbances $d_k$ and tracked measurement outputs $z_k$ we obtain an extended state-space model. The dimensions are $x\in\mathbb{R}^{n_x}$, $u\in\mathbb{R}^{n_u}$, $d\in\mathbb{R}^{n_d}$, $y\in\mathbb{R}^{n_y}$ and $z\in\mathbb{R}^{n_z}$.
+Reference tracking is done by finding steady-state inputs and states, that are sufficient to meet the control target. The object of the OCP is to minimize the distance between all future states and inputs and their corresponding steady-state value. We choose a quadratic cost function. Note that all systems in this section are discrete-time with a sampling time of $T_s = 0.01\si{\second}$. 
+
+Augmenting the system with input and ouput disturbances $d_k$ and tracked measurement outputs $z_k$ we obtain an extended state-space model. The dimensions are $x\in\mathbb{R}^{n_x}$, $u\in\mathbb{R}^{n_u}$, $w\in\mathbb{R}^{n_w}$, $d\in\mathbb{R}^{n_d}$, $y\in\mathbb{R}^{n_y}$ and $z\in\mathbb{R}^{n_z}$. The system contains the wind feed-forward matrix $B_w$.
 \begin{align}
 x_{k+1} &= A x_k + B u_k + B_w w_k + B_d d_k \label{eq:MPC_dt}\\
 d_{k+1} &= d_k \nonumber \\ 
@@ -213,7 +217,7 @@ For our multirotor the open-loop optimal control problem formulates as following
 & & & x_0 = \hat x (t), \; d_0 = \hat d(t), \; w_0 = \hat w(t) \label{eq:mpc_opti}
 \end{align}
 
-As in the LQRI, we require $Q\succeq$, $P\succeq$ and $R\succ0$. We will choose $P$ to solve the Riccati equation. This mimics unconstrained infinite horizon control at the end of the horizon and guarantees stability for the closed-loop linear system, if the terminal set is invariant.
+As in the LQRI, we require $Q\succeq0$, $P\succeq0$ and $R\succ0$. We will choose $P$ to solve the DARE. This mimics unconstrained infinite horizon control at the end of the horizon and guarantees stability for the closed-loop linear system, if the terminal set is invariant. The wind and augmented disturbances are assumed constant.
 
 The steady-state targets $\bar{x}_t$ and $\bar{u}_t$ are calculated at every sampling time $t$, if possible for all $N$ future reference points. They are the solution of the following least-squares problem, which is established by solving system \ref{eq:MPC_dt} for $x_{k+1}=x_k=\bar{x}_t$, $u_k = \bar{u}_t$ and $z_k = r(t)$ with $r(t)$ being the current reference position and velocity. The inverse of the left-hand side matrix $M^{-1}$ can be obtained offline.
 \begin{align}
@@ -231,7 +235,7 @@ HC & 0
 r(t) - H C_d \hat{d}(t) \label{eq:steady_state_ls}
 \end{bmatrix}
 \end{align}
-$\hat{w}(t)$ is the wind velocity vector estimated at the current time sample. $\hat{d}(t)$ and $\hat x (t)$ are the currently estimated disturbances and analogous estimated states. The estimator is a Luenberger observer, estimating the disturbance and state at every sample time. Instead, for example a Kalman filter could have been applied as well. The estimator is updated using the following equation. $u(t)$ is the previously calculated optimal control input. $x(t)$ is the currently measured state.
+$\hat{w}(t)$ is the wind velocity vector estimated at the current time sample. $\hat{d}(t)$ and $\hat x (t)$ are the currently estimated disturbances and analogously estimated states. The estimator is a Luenberger observer, estimating the disturbance and state at every sample time. Instead, for example, a Kalman filter could have been applied as well. The estimator is updated using the following equation. $u(t)$ is the previously calculated and applied optimal control input. $x(t)$ is the currently measured state.
 \begin{align}
 \begin{bmatrix}
 \hat{x}(t+1) \\ \hat{d}(t+1)
@@ -260,7 +264,7 @@ u(t) \\ \hat{w}(t)
 L C x(t) \label{eq:mpc_obsv_update}
 \end{align}
 
-The observer gain $L$ is computed offline using regular pole placement methods for the system. Here, this is done using MATLAB's \texttt{place} command. The dual of the closed-loop feedback problem is described by the observer error dynamics \ref{eq:mpc_obsv_err} of the augmented system, which has to be observable. The poles are chosen, such that they are around ten times faster than the fastest system dynamics ($\approx 60\si{\radian\per\second}$). This may make the system sensible to measurement noise. 
+The observer gain $L$ is computed offline using regular pole placement methods for the system. Here, this is done using MATLAB's \texttt{place} command. The dual of the closed-loop feedback problem is described by the observer error dynamics \ref{eq:mpc_obsv_err} of the augmented system, which has to be observable. The poles are chosen, such that the error dynamics settle fast enough, but sensor noise is not amplified too much. We set them around $5\si{\radian\per\second}$. 
 \begin{align}
 \begin{bmatrix}
 A & B_d \\
@@ -272,7 +276,7 @@ C & C_d
 \end{bmatrix} \label{eq:mpc_obsv_err}
 \end{align}
 
-For the proposed offset-free MPC to work, we pick $n_d$, the number of disturbances, equal to the number of outputs $n_y$. According to Maeder \cite{Maeder2009}, the augmented system \ref{eq:MPC_dt} is observable if and only if $(C,A)$ observable and
+To guarantee offset-free MPC, we pick $n_d$, the number of disturbances, equal to the number of outputs $n_y$. According to Maeder \cite{Maeder2009}, the augmented system \ref{eq:MPC_dt} is observable if and only if $(C,A)$ observable and
 \begin{align}
 \det \begin{bmatrix}
 A-I & B_d \\ C & I 
@@ -280,6 +284,8 @@ A-I & B_d \\ C & I
 \end{align}
 
 \subsection{Implementation}
+In this subsection we discuss the implementation of the MPC and how the previously derived dynamics apply to the problem formulation.
+
 The MPC can be summarized in the following steps:
 \begin{enumerate}
 \item initialization: compute $P$, $L$, $M^{-1}$
@@ -293,25 +299,27 @@ The MPC can be summarized in the following steps:
 \end{enumerate}
 
 \subsubsection{CVXGEN}
-The optimization problem \ref{eq:mpc_opti} is the computationally limiting part in MPC, as a convex optimization problem has to be solved. One can handle this problem by explicitly solving \ref{eq:mpc_opti} for various constraint and state combinations and looking up the control law, which is piecewise affine. Another solution is online optimization, which we choose.
+The optimization problem \ref{eq:mpc_opti} is the computationally limiting part in MPC, as a convex optimization problem has to be solved. One can handle this problem by explicitly solving \ref{eq:mpc_opti} for all possible constraint and state combinations and looking up the control law, which is piecewise affine. Or one solves the OCP online, which we choose.
 
-Convex optimization problems can be solved very efficiently using the code generation software for convex optimization CVXGEN by Mattingley and and Boyd \cite{Mattingley2010}. Unlike regular parser, the hard-coded solver solve optimizations a lot faster. They exploit the fact that the problems dimensions and structure is known a priori. For example, they take care of transformations in advance and allocate memory in an initialization phase of the running program.
+Convex optimization problems can be solved very efficiently using the code generation software for convex optimization CVXGEN by Mattingley and and Boyd \cite{Mattingley2010}. Unlike regular parser, hard-coded solvers solve optimizations a lot faster. They exploit the fact that the problems dimensions and structure is known a priori. For example, they take care of transformations in advance and allocate memory in an initialization phase of the running program.
 
 For code generation, one can simply write down the problem similar to \ref{eq:mpc_opti} in the CVXGEN interface. The software then automatically generates hard-coded c-code and a MATLAB MEX interface with the solver. This solver then can be called from within MATLAB using \texttt{csolve}.
 
-The code for generating the solver is displayed in listing \ref{code:cvxgen} in the appendix. The dimensions and the prediction horizon have to be fixed. For the proposed linear system \ref{eq:lin_sys_dt}, we have $n_x=n_d=10$ states and disturbances, $n_u=3$ control inputs and $n_w=2$ wind inputs. The number of states, control inputs, prediction horizon and constraints determines the size of the optimization problem. We choose a prediction horizon of $N=40$, which corresponds to looking $0.4\si{\second}$ ahead. For larger horizons, the optimal control problem becomes too large and the code can not be generated. All other parameters, like the system matrices, the current state and constraints, can be passed to the solver before calling \texttt{csolve}. Notice in the code, that we denoted the sparsity of the system matrices explicitly, which cut the computation time to half.
+The code for generating the solver is displayed in listing \ref{code:cvxgen} in the appendix. The dimensions and the prediction horizon have to be fixed. For the proposed linear system \ref{eq:lin_sys_dt}, we have $n_x=n_d=10$ states and disturbances, $n_u=3$ control inputs and $n_w=2$ wind inputs. 
+
+The number of states, control inputs, prediction horizon and constraints determines the size of the optimization problem. We choose a prediction horizon of $N=40$, which corresponds to looking $0.4\si{\second}$ ahead. For larger horizons, the optimal control problem becomes too large and the code can not be generated. All other parameters, like the system matrices, the current state and constraints, can be passed to the solver before calling \texttt{csolve}. Notice in the code, that we denoted the sparsity of the system matrices explicitly, which cut the computation time to half.
 
 \subsubsection{System Matrices}
-As for the LQRI, we consider the heading free linear system \ref{eq:lin_sys_dt}. We discretized our model (denoted by a bar) and assign it to the above defined MPC state-space system \ref{eq:MPC_dt}. Again notice, that the position and velocity in the state and the reference need to be converted into orientation-fixed frame. 
+As for the LQRI, we consider the heading free linear system \ref{eq:lin_sys_dt}. We discretize the model  and assign it to the above defined MPC state-space system \ref{eq:MPC_dt}. Again notice, that the position and velocity in the state and the reference need to be converted into orientation-fixed frame. 
 \begin{align}
-A & = \discrete{\mathbf{A}} \\
-B & = \discrete{\mathbf{B}} \\
-B_w & = \discrete{\mathbf{B}}_w \\
-C & = \discrete{\mathbf{C}} \\
-x_k &= \mathbf{x}_{\mathcal{O},k} - \mathbf{x}_{\mathcal{O},ss}  \\
-u_k &= \mathbf{u}_{\mathcal{O},k} - \mathbf{u}_{\mathcal{O},ss}  \\
-u_k &= \mathbf{y}_{\mathcal{O},k} - \mathbf{y}_{\mathcal{O},ss}  \\
-r_k &= \begin{bmatrix}
+A &\gets {\mathbf{A}} \\
+B &\gets {\mathbf{B}} \\
+B_w &\gets {\mathbf{B}}_w \\
+C &\gets {\mathbf{C}} \\
+x_k &\gets \mathbf{x}_{\mathcal{O},k} - \mathbf{x}_{\mathcal{O},ss}  \\
+u_k &\gets \mathbf{u}_{\mathcal{O},k} - \mathbf{u}_{\mathcal{O},ss}  \\
+u_k &\gets \mathbf{y}_{\mathcal{O},k} - \mathbf{y}_{\mathcal{O},ss}  \\
+r_k &\gets \begin{bmatrix}
 \mathbf{r}_{\mathcal{O},ref,k} \\
 \mathbf{v}_{\mathcal{O},ref,k}
 \end{bmatrix}
@@ -324,10 +332,23 @@ H &= \begin{bmatrix}
 \end{bmatrix} 
 \end{align}
 \subsubsection{Weights}
-Weighting the cost function has been done iteratively, simulating step experiments and adjusting the weights until a desired performance was achieved.
+Weighting the cost function has been done iteratively, simulating step experiments and adjusting the weights until a desired performance was achieved. Eventually we chose:
+\begin{align}
+Q &= \begin{bmatrix}
+\mathbf{I}_4 & 0 & 0 \\
+0 & 10\cdot\mathbf{I}_3 & 0 \\
+0 & 0 & \mathbf{I}_3
+\end{bmatrix}
+R &= \begin{bmatrix}
+0.001 & 0 & 0 \\
+0 & 1 & 0 \\
+0 & 0 & 1
+\end{bmatrix}
+\end{align}
+We penalize the deviation from the desired steady-state position a little more and decrease the penalty on the reference thrust. This weighting leads to a rather aggressive tuning.
 \subsubsection{Disturbance Model}
 \label{sec:mpc_dist}
-As Maeder states in \cite{Maeder2009}, the simplest way to achieve offset-free control is to set the number of disturbances equal the number of outputs, $n_d=n_y=10$. The disturbance matrices $B_d$ and $C_d$ then have to be chosen such that \ref{eq:mpc_obsv_cond} holds.
+As Maeder states in \cite{Maeder2009}, the simplest way to achieve offset-free control is to set the number of disturbances equal the number of outputs, $n_d=n_y=10$. The disturbance matrices $B_d$ and $C_d$ then have to be chosen such that the augmented system is observable (\ref{eq:mpc_obsv_cond} holds).
 
 A common way is to model the disturbance as output disturbance with $C_d=\mathbf{I}$ and $B_d= \mathbf{0}$. However, this is only possible, if the plant has no integrators, which our plant has.
 
@@ -336,11 +357,11 @@ Therefore we model the disturbance as simple input disturbance.
 B_d = \mathbf{I}_{10} \\
 C_d = \mathbf{0}_{10\times10}
 \end{align}
-Physically, this means, we have disturbance accelerations (forces and moments) and velocities acting on the system, which we estimate and which the controller then can compensate.
+Physically, this means, we have disturbance accelerations (forces and moments) and velocities acting on the system. The controller estimates these and adapts the inputs accordingly to compensate them.
 \subsubsection{Constraints}
 MPC has the great advantage to consider constraints on inputs and states explicitly in the problem formulation. One could for example use this feature for obstacle avoidance.
 
-We will only use input constraints. For one thing, we want to keep the attitude bounded, such that it does not diverge too much from the linearization point or gets into regions of singular Euler angles. And for another, we limit the thrust within the capable regions given by the motors (see equations \ref{eq:T_min} and \ref{eq:T_max}.
+We will only use input constraints. For one thing, we want to keep the attitude bounded, such that it does not diverge too much from the linearization point or gets into regions of singular Euler angles. And for another, we limit the thrust within the capable regions given by the motors (see equations \ref{eq:T_min} and \ref{eq:T_max}).
 
 \begin{align}
 T_{min} \leq T_{ref} \leq T_{max} \\
@@ -362,31 +383,31 @@ For performance examination, we run a noise-free step response experiment. The r
 \subfloat[][{Control input}]{
 \includegraphics{\folder/tikzfigures/step_response_in_MPC.tikz}
 \label{fig:mpc_step_in}}
-\caption{Unit step response for the MPC with the nominal model}
+\caption{Simulated unit step response of the MPC controlled Firefly. The MAV has to fly from hovering $1\si{\metre}$ ahead.}
 \label{fig:mpc_step}
 \end{figure}
 
-In comparison to the LQRI the MPC is tuned more aggressively. In the first interval, the reference pitch is set to the maximum ($30\si{\degree}$ to accelerate into $x$--direction. Then, when the target is close enough, the pitch reference is reversed in order to come to a stop at $x=1\si{\metre}$.
+In comparison to the LQRI, the MPC is tuned more aggressively. In the first interval of the control inputs \ref{fig:mpc_step_in}, the reference pitch is set to the maximum ($30\si{\degree}$) to accelerate into $x$--direction. Then, when the target is close enough, the pitch reference is reversed in order to come to a stop at $x=1\si{\metre}$.
 
-Hereby the linear control law is switched from the constrained to the unconstrained case. The unconstrained linear control law corresponds to the standard linear quadratic regulator law, as the final penalty has been chosen to be the solution of the algebraic Riccati equation.
+Hereby, the linear control law is switched from the constrained to the unconstrained case. The unconstrained linear control law corresponds to the standard linear quadratic regulator law, as the final penalty has been chosen to be the solution of the algebraic Riccati equation.
 
 The step response has no overshoot, a $10$ to $90\si{\percent}$ rise time of $0.82 \si{\second}$ and a $2\si{\percent}$ settling time of $1.73 \si{\second}$. With this, it has a better performance than the LQRI.
 
-The controller achieves offset free tracking of constant references. Modeling errors are estimated as constant input disturbances as stated in chapter \ref{sec:mpc_dist}. The estimated disturbances are depicted in figure \ref{fig:mpc_step_dist}. Two things stand out.
+The controller achieves offset free tracking of constant references. Modeling errors are estimated as constant input disturbances as stated in the previous section \ref{sec:mpc_dist}. The estimated disturbances are depicted in figure \ref{fig:mpc_step_dist}. Two things stand out.
 
 \begin{figure}
 \centering
 \includegraphics{\folder/tikzfigures/step_response_dist_MPC.tikz}
+\caption{Disturbance estimation for the noise-free unit step response of the MPC. $d_x$,$d_y$,$d_z$ in $[\si{\metre\per\second}]$, $d_{dx}$,$d_{dy}$,$d_{dz}$ in $[\si{\metre\per\second\per\second}]$, $d_\phi$,$d_\theta$ in $[\si{\radian\per\second}]$, $d_{1/8d\phi}$,$d_{1/8d\theta}$ in $[\si{\radian\per\second\per\second}]$}
 \label{fig:mpc_step_dist}
-\caption{Disturbance estimation for the nominal unit step response of the MPC. $d_x$,$d_y$,$d_z$ in $[\si{\metre\per\second}]$, $d_{dx}$,$d_{dy}$,$d_{dz}$ in $[\si{\metre\per\second\per\second}]$, $d_\phi$,$d_\theta$ in $[\si{\radian\per\second}]$, $d_{1/8d\phi}$,$d_{1/8d\theta}$ in $[\si{\radian\per\second\per\second}]$}
 \end{figure}
 
-First, mostly disturbances in acceleration occur, e.g. $d_{dz}$. Physically, these disturbances are forces and moments acting on the MAV that are not modeled. For example in the first two seconds a relatively large disturbance force in $z$--direction is estimated, dragging the Firefly down. This disturbance comes from the drag force, which $z$--component is lost during linearization.
+First, mostly disturbances in acceleration occur, e.g. $d_{dz}$. Physically, these disturbances are forces and moments acting on the MAV that are not modeled. For example in the first two seconds a relatively large disturbance force in $z$--direction is estimated, dragging the Firefly down. This disturbance probably comes from the drag force, which $z$--component is lost during linearization and the unmodelled allocation map, which reduces the overall thrust when pitching.
 
 Second, there is a constant remaining force into $z$--direction at steady-state. This force is then compensated by the controller and thus it achieves offset-free reference tracking.
 
 \subsubsection{Delay}
-To see, how well the MPC can deal with dynamic references, we run the sinusoid experiment as for the LQRI on a noise free plant. The Firefly has to go back and forth $1\si{\metre}$ twice within $6 \si{\second}$. The controller has knowledge about the next $N=40$ future reference positions and velocities and tries to minimize the distance to them. The resulting output is depicted in figure \ref{fig:mpc_sine}.
+To see, how well the MPC can deal with dynamic references, we run the sinusoid experiment as for the LQRI on a noise-free plant. The Firefly has to go back and forth $1\si{\metre}$ twice within $6 \si{\second}$. The controller has knowledge about the next $N=40$ future reference positions and velocities and tries to minimize the distance to them. The resulting output is depicted in figure \ref{fig:mpc_sine}.
 
 The MAV catches up with the desired position and velocity already on the first segment and then follows the sine wave closely. Compared with the LQRI it has the advantage of looking $0.4\si{\second}$ into the future, adapting its inputs accordingly. 
 
@@ -395,16 +416,16 @@ However, as the desired trajectory is quite demanding in terms of frequency, the
 \begin{figure}
 \centering
 \includegraphics{\folder/tikzfigures/sine_response_out_MPC.tikz}
-\caption{Sine trajectory experiment MPC}
+\caption{Simulated sine trajectory experiment  of the MPC controlled Firefly. The MAV has to fly back and forth $1\si{\metre}$ starting from hovering.}
 \label{fig:mpc_sine}
 \end{figure} 
 
 \subsubsection{Noise}
 To see the MPC's sensitivity to noise, we run the step experiment again, but this time the state measurement is delayed and disturbed by additive white noise. Figure \ref{fig:mpc_step_noisy} shows the response and control input. Figure \ref{fig:mpc_step_dist_noisy} shows the estimated constant disturbances for offset-free control.
 
-The measurement noise is entering the system in two ways. For one thing, the optimal control problem \ref{eq:mpc_opti} gets initialized with the current state estimation. And for another, the state measurement is used for estimating the disturbances \ref{eq:mpc_obsv_update}.
+The measurement noise is entering the system in two ways. For one thing, the optimal control problem \ref{eq:mpc_opti} gets initialized with the current state estimation. And for another, the state measurement is used for estimating the disturbances in the measurement update equation \ref{eq:mpc_obsv_update}.
 
-Both effects have direct influence on the control input. As the MPC is tuned quite performance optimized, the noise leads to jerk, as the control input is scrambled \ref{fig:mpc_step_in_noisy}. However, the control target is still achieved \ref{fig:mpc_step_out_noisy} and no situations of instability have been observed.
+Both effects have direct influence on the control input. As the MPC is tuned quite performance optimized, the noise leads to jerk, as the control input is scrambled (see figure \ref{fig:mpc_step_in_noisy}). However, the control target is still achieved as can be seen in the experiment output \ref{fig:mpc_step_out_noisy}. No situations of instability have been observed.
 
 
 The disturbances, which should be zero as in the noise-free experiment \ref{fig:mpc_step_dist}, now show some significant reaction \ref{fig:mpc_step_dist_noisy}. The Luenberger observer gain $L$ governing the observer error dynamics \ref{eq:mpc_obsv_err} does not only lead to a relatively fast converging disturbance observer, but also introduces measurement noise to the estimation. Therefore the gain can not be chosen too large and in future works, a Kalman filter may be a better choice.
@@ -420,23 +441,23 @@ To reduce the jerk effect in the response, the controller could be tuned less ag
 \subfloat[][{Control input}]{
 \includegraphics{\folder/tikzfigures/step_response_in_MPC_noisy.tikz}
 \label{fig:mpc_step_in_noisy}}
-\caption{Unit step response MPC with noisy state measurements}
+\caption{Unit step response MPC with noisy state and wind measurements.}
 \label{fig:mpc_step_noisy}
 \end{figure}
 
 \begin{figure}
 \centering
 \includegraphics{\folder/tikzfigures/step_response_dist_MPC_noisy.tikz}
+\caption{Disturbance estimation for the MPC's noisy step experiment.}
 \label{fig:mpc_step_dist_noisy}
-\caption{Disturbance estimation for the MPC's noisy step experiment}
 \end{figure}
 
 \subsubsection{Wind}
-Unlinke the LQRI, the MPC has wind feed-forward. We run the helix experiment with wind gust as above.
+Unlike the LQRI, the MPC has wind feed-forward. We run the helix experiment with wind gust as above.
 
-The MAV has to climb up linearly from $0$ to $20 \si{\metre}$ at $0.15 \si{\metre\per\second}$ in a helix like manner. While climbing up it has to complete $4$ circles with a diameter of $4\si{metre}$. The whole experiment takes $1 \si{\minute}$. 
+The MAV has to climb up linearly from $0$ to $20 \si{\metre}$ at $0.15 \si{\metre\per\second}$ in a helix like manner. While climbing up it has to complete $4$ circles with a diameter of $4\si{\metre}$. The whole experiment takes $1 \si{\minute}$. 
 
-From $5$ to $15 \si{\metre}$ height, a horizontal wind gust in $x$--direction hits the MAV. The wind increases from $0$ to $10 \si{\metre\per\second}$ and is modeled as stationary stochastic process as in equation \ref{eq:wind_state_space}. The state measurement is corrupted by noise.
+From $5$ to $15 \si{\metre}$ height, a horizontal wind gust in $x$--direction hits the MAV. The wind increases from $0$ to $10 \si{\metre\per\second}$ and is modeled as stationary stochastic process as in equation \ref{eq:wind_state_space}. The state and wind measurement is corrupted by noise and delayed.
 
 \begin{figure}
 \centering
@@ -451,7 +472,9 @@ From $5$ to $15 \si{\metre}$ height, a horizontal wind gust in $x$--direction hi
 \label{fig:mpc_helix}
 \end{figure}
 
-Even though, the wind measurements come with a delay of $0.1 \si{\second}$, the MPC is still a lot faster in compensating the drag due to the gust than the LQRI. The MPC controlled Firefly only deviates as much as $5\si{\centi\metre}$ from the reference trajectory, when the wind sets in \ref{fig:mpc_helix_xy}. Still it needs about $4\si{\second}$ to completely return to the reference.
+The MPC controlled multirotor follows the reference trajectory very well. Figure \ref{fig:mpc_helix_3d} shows the position. One can observe how the MAV is deviated from its track at $z=5\si{\metre}$ and $z=15\si{\metre}$, when the wind starts and ends. 
+
+Even though, the wind measurements come with a delay of $0.1 \si{\second}$, the MPC is still a lot faster in compensating the drag due to the gust than the LQRI. The MPC controlled Firefly only deviates as much as $5\si{\centi\metre}$ from the reference trajectory, when the wind sets in (see top view \ref{fig:mpc_helix_xy}).% Still it needs about $4\si{\second}$ to completely return to the reference.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % NMPC
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
