@@ -740,3 +740,34 @@ From $5$ to $15 \si{\metre}$ height, a horizontal wind gust in $x$--direction hi
 The NMPC controlled Firefly manages to follow the reference trajectory very precisely. As mentioned in the sine trajectory experiment, it takes advantage of predicting future states and knowing future reference positions and velocities. Also shows offset-free tracking.
 
 The moment the wind gust sets in or settles respectively, the Firefly only gets deflected by $3\si{\centi\metre}$ from the reference trajectory. This becomes evident in the top view \ref{fig:nmpc_helix_xy}. The MAV not only gets deflected the least, but also returns to the reference the fastest.%when the wind changes and returns to the reference within $3.5 \si{\second}$. 
+
+\section{Computation Times}
+The bottle neck of model predictive control is the solution online solution of the finite-horizon optimal control problem. The code-generation toolkits CVXGEN and ACADO definitely help to reduce this issue. The implemented solvers are able to solve the OCP at a very high rate, much faster than the sample time $T_s = 0.01 \si{\second}$.
+
+Running the implemented control algorithms on an Intel Core i5 2.9 Ghz 4 cores processor with a single threaded MATLAB R2014b we established the computation times in table \ref{tab:computation_times}. The online optimization of the MPC OCP takes $0.85 \si{\milli\second}$ on average using CVXGEN. The online optimization of the NMPC OCP takes $2.46 \si{\milli\second}$ on average using ACADO. 
+
+The MPC's overall computation time is similar to the NMPC's, because in the MPC the disturbance estimator and the $N$ future steady-state reference states and inputs need to be calculated. At this point, the implemented code certainly has some optimization upside.
+\begin{table}[h!]
+\begin{center}
+\caption{Computation times in $[\si{\milli\second}]$ for calculating the control inputs at each sampling instant using LEE, LQRI, MPC, NMPC.}\vspace{1ex}
+\label{tab:computation_times}
+\begin{tabular}{ll|cccc}
+\hline
+      & index  & LEE        & LQRI       & MPC        & NMPC       \\ \hline \hline
+total & mean   & \num{0.28} & \num{1.72} & \num{4.25} & \num{4.33} \\
+      & median & \num{0.28} & \num{1.67} & \num{4.19} & \num{4.22} \\
+      & min    & \num{0.26} & \num{1.62} & \num{4.06} & \num{4.10} \\
+      & max    & \num{0.40} & \num{2.17} & \num{5.05} & \num{6.67} \\
+\hline
+online OCP & mean   & -- & -- & \num{0.85} & \num{2.46}\\
+           & median & -- & -- & \num{0.84} & \num{2.39}\\
+           & min    & -- & -- & \num{0.80} & \num{2.31}\\
+           & max    & -- & -- & \num{1.09} & \num{4.83}\\
+\hline
+dimensions & states & -- & 13 & 10 & 13 \\
+ 		   & inputs & -- & 3  & 3  & 3  \\
+ 		   & prediction horizon & -- & $\infty$ & \num{40} & \num{100} \\
+\hline
+\end{tabular}
+\end{center}
+\end{table}

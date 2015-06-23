@@ -26,6 +26,13 @@ In platforms with even-numbered motors, neighboring rotors typically rotate in o
 
 The Firefly has six $20 \si{\cm}$ diameter rotors equally aligned around the center. It is $60.5 \times 66.5 \times 16.5 \si{\cm}$ in size and weights $1.6 \si{\kg}$. The maximum thrust is $36 \si{\N}$ and it reaches a maximum airspeed of $15 \si{\metre\per\second}$. All parameters used in the simulation are summarized in table \ref{tab:firefly}.
 
+\begin{figure}
+   \centering
+   \includegraphics[width=0.75\textwidth]{images/firefly.jpg}
+   \caption{AscTec Firefly \cite{www:asctec}}
+   \label{pics:firefly}
+\end{figure}
+
 \begin{table}
 \begin{center}
 \caption{Vehicle parameters of the AscTec Firefly.}\vspace{1ex}
@@ -44,7 +51,6 @@ rolling moment constant & $C_R$ & $\si{\kilogram\metre\per\radian}$ & \num{0.00}
 drag moment constant & $C_M$ & $\si{\metre}$ & \num{1.60e-2} \\
 number rotors & $n$ & $1$ & \num{6} \\
 minimum motor rate & $\omega_{min}$ & $\si{\per\second}$ & \num{5.23} \\
-minimum motor rate & $\omega_{min}$ & $\si{\per\second}$ & \num{5.23} \\
 maximum motor rate & $\omega_{max}$ & $\si{\per\second}$ & \num{1.05e3} \\
 hover motor rate & $\bar{\omega} $ & $\si{\per\second}$ & \num{5.41e2} \\
 \hline
@@ -52,12 +58,6 @@ hover motor rate & $\bar{\omega} $ & $\si{\per\second}$ & \num{5.41e2} \\
 \end{center}
 \end{table}
 
-\begin{figure}
-   \centering
-   \includegraphics[width=0.75\textwidth]{images/firefly.jpg}
-   \caption{AscTec Firefly \cite{www:asctec}}
-   \label{pics:firefly}
-\end{figure}
 
 It is provided with an inertial measurement unit (IMU) and has an efficient attitude controller onboard. In reality, an external optical motion capture system by Vicon is available for position feedback. In the simulation we will assume full state knowledge, which may be disturbed by measurement noise accordingly. 
 

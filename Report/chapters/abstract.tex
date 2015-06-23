@@ -3,4 +3,4 @@
 %\chapter*{Zusammenfassung}
 %\addcontentsline{toc}{chapter}{Zusammenfassung}
 
-Hier kommt der Abstact hin \dots
+This semester project addresses the position tracking problem of an unmanned hexacopter under aerodynamic influences. An extended motion model is proposed, which includes drag and wind forces. A cascaded control structure is used to separately control position and attitude. Three controllers for position control are developed: A linear-quadratic regulator, a linear model predictive controller and a nonlinear model predictive controller. Both model predictive controllers are capable of feed-forwarding wind measurements. They also can handle state and actuation constraints and deliver offset-free constant reference tracking. The optimal control problems are solved efficiently using the code generation software CVXGEN and ACADO. The controllers are implemented in MATLAB and tested in various simulated experiments. 

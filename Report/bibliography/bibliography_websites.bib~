@@ -98,9 +98,18 @@ howpublished = {\url{https://www.embotech.com/}}
 
 
 @MISC{www:acado,
-author = {{F}erreau, {H}ans {J}oachim,
+author = {{F}erreau, {H}ans {J}oachim},
 title = {{ACADO} {M}anual},
 month = June,
 year = {2015},
 howpublished = {\url{http://www.acado.github.io/documentation.html}}
+}
+
+@MISC{www:rotors,
+author = {{F}urrer, {F}adri
+{A}chtelik, {M}arkus},
+title = {{R}otor{S} - a MAV gazebo simulator},
+month = June,
+year = {2015},
+howpublished = {\url{https://www.github.com/ethz-asl/rotors_simulator}}
 }
