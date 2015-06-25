@@ -55,6 +55,8 @@
 \renewcommand{\vec}{\vectorsym}
 \newcommand{\mat}{\matrixsym}
 
+\input{preambles/my_preamble}
+
 
 % ==== language ================================================================
 \usepackage[latin1]{inputenc}
@@ -73,9 +75,9 @@
 \colorlet{secondcolor}{ETHc} % see pages 2  and 3 of this sample presentation
 
 % === fill in first information for the presentation ==========================
-\newcommand*{\ETHtitle}{TITLE}
-\newcommand*{\ETHauthor}{AUTHOR}
-\newcommand*{\ETHdate}{DATE}
+\newcommand*{\ETHtitle}{Incorporating Aerodynamic Effects into Model Based Con\-trol for Multirotors}
+\newcommand*{\ETHauthor}{Rik B\"ahnemann}
+\newcommand*{\ETHdate}{30.06.2015}
 
 
 \begin{document}
@@ -85,79 +87,55 @@
 % ==== start here with the text on the titlepage
 \textcolor{white}{
 \textbf{\ETHauthor}\\ \\
-TYPE OF PROJECT\\
-Supervised by }\\
+Semester Project\\
+Supervised by Markus Achtelik, Michael Burri, Mina Kamel}\\
 %%
 
 \clearpage
 % =========== begin of the standard page ============
 
+\input{slides/00_motivation}
+
 \ETHslide
 \section*{Overview}
 \tableofcontents
-
 \clearpage
 
-\ETHslide
-\section*{Adding a video}
-\addcontentsline{toc}{section}{Adding a video}
-%Example included because it took me very long to figure it out.
-\includemedia[
-		  width=0.8\textwidth,
-		  height=0.45\textwidth,
-		  activate=pageopen,
-		  addresource=LittleDog.mp4,
-		  flashvars={source=LittleDog.mp4}
-		]{}{VPlayer.swf}\\
-		\footnotesize{LittleDog walking over rough terrain (S. Schaal, ``The latest version of the LittleDog Robot,'' 2010. https://www.youtube.com/watch?v=nUQsRPJ1dYw)}
-			
-\clearpage
+\blankpage{Model}
+\input{slides/01_starting_point}
+\input{slides/02_wind_drag}
+\input{slides/03_wind_model}
+\blankpage{Control Approach}
+\input{slides/04_cascaded_control}
+\input{slides/05_control_system}
+\input{slides/06_rhc}
+\input{slides/07_characteristics_mpc}
+\blankpage{Control Realization}
+\input{slides/08_linear_mpc}
+\input{slides/09_linear_mpc_ocp}
+\input{slides/10_linear_mpc_algo}
+\input{slides/11_nonlinear_mpc}
+\input{slides/12_nonlinear_mpc_ocp}
+\input{slides/13_nonlinear_mpc_algo}
+\blankpage{Simulation Results}
+\input{slides/14_step_response_mpc}
+\input{slides/15_step_response_nmpc}
+\input{slides/16_wind_mpc}
+\input{slides/17_wind_nmpc}
+\input{slides/18_computation}
+\blankpage{Conclusion}
+\input{slides/19_result}
+\input{slides/20_kthxbye}
 
 
-\ETHslide
-\section*{Adding a video - Example Slide}
-\addcontentsline{toc}{subsection}{Example Slide}
-\begin{minipage}{0.6\textwidth}
-	\begin{itemize}
-		\item[\ETHitem] Point 1
-		\item[\ETHitem] Point 2
-		\begin{itemize}
-			\item Point 1.1
-			\item Point 1.2
-		\end{itemize}
-\end{itemize}
-\end{minipage}
-\begin{minipage}{0.39\textwidth}
-	\centering
-	\includegraphics[width=0.75\textwidth]{SlopeStdDev.png}\\
-	\footnotesize{Caption}
-\end{minipage}
 
-\begin{comment}
-	Add a video file
-	
-	\includemedia[
-	 width=\textwidth,
-	 height=0.55\textwidth,
-	 activate=pageopen,
-	 addresource=Video/BigDog.mp4,
-	 flashvars={source=Video/BigDog.mp4}
-			]{}{VPlayer.swf}
-	\footnotesize{Caption}
-	
-	\end{comment}
 
-\clearpage
-
-\begin{comment}
-References Slide
 \ETHslide
 \addcontentsline{toc}{section}{References}
 \bibliographystyle{bibliography/IEEEtranN}
 \tiny{
-\bibliography{FILE}}
+\bibliography{bibliography/bibliography,bibliography/bibliography_websites}}
 \clearpage
-\end{comment}
 \end{document}
 
 

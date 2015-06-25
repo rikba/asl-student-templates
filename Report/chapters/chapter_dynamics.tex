@@ -378,7 +378,7 @@ In wind tunnel experiments they measured the forces on the switched off MAV for 
 
 Following rotor blade theory, the rotor drag force is given as in equation \ref{eq:drag_force}. With zero ground velocity, we have:
 \begin{align}
-\mathbf{F}_D&= \sum_{i=1}^6 \omega_i \cdot  C_D \cdot \body{\mathbf{\mathbf{w}}}^\perp.
+\mathbf{F}_D&= \sum_{i=1}^n \omega_i \cdot  C_D \cdot \body{\mathbf{\mathbf{w}}}^\perp.
 \end{align}
 
 Using the worst case area drag coefficient $C_A = 0.02$ from Schianos experiments and the rotor drag coefficent $C_D = \num{6.84 e-5}$ for the Firefly, we simulate the resulting forces. Figure \ref{fig:area_vs_rotor_drag} shows the area and the rotor drag at different wind speeds and a hovering Firefly.    

@@ -1,0 +1,20 @@
+\ETHslide
+\section*{Receding Horizon Control}
+%\addcontentsline{toc}{section}{}
+\vspace*{\fill}
+
+\begin{figure}[h]
+\centering
+\scalebox{0.6}{
+\input{images/rhc.tikz}
+}
+\end{figure} 
+At each sample time:
+\begin{itemize}
+\item[\ETHitem] Measure/estimate current state $x(t)$
+\item[\ETHitem] Find the optimal input sequence for the entire planning window $N$: $U_t^* = \{ u_t^*, u_{t+1}^*, \ldots, u_{t+N-1}^* \}$
+\item[\ETHitem] Implement the first control action $u_t^*$
+\end{itemize}
+
+\vspace*{\fill}
+\clearpage

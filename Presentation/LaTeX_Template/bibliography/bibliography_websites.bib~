@@ -1,0 +1,125 @@
+@MISC{www:primeair,
+howpublished = {\url{http://www.amazon.com/b?node=8037720011}},
+author = {Amazon},
+title = {{P}rime {A}ir},
+month = June,
+year = {2015},
+}
+
+@MISC{www:lily,
+author = {Lily},
+title = {{L}ily},
+month = June,
+year = {2015},
+howpublished = {\url{https://www.lily.camera}}
+}
+
+@MISC{www:agribotix,
+author = {Agribotix},
+title = {{E}nduro {Q}uad},
+month = June,
+year = {2015},
+howpublished = {\url{http://www.agribotix.com}}
+}
+
+@MISC{www:sensefly,
+author = {senseFly},
+title = {e{X}om},
+month = June,
+year = {2015},
+howpublished = {\url{https://www.sensefly.com/drones/exom.html}}
+}
+
+@MISC{www:3drobotics,
+author = {3DR},
+title = {{S}pektre},
+month = June,
+year = {2015},
+howpublished = {\url{http://www.3drobotics.com/2015/03/sneak-peek-3dr-spektre-industrial-inspection-drone/}}
+}
+
+@MISC{www:asctec,
+author = {{A}scending {T}echnologies ({A}sc{T}ec)},
+title = {{F}irefly},
+month = June,
+year = {2015},
+howpublished = {\url{http://www.asctec.de/en/uav-uas-drone-products/asctec-firefly/}}
+}
+
+@MISC{www:parrot,
+author = {{P}arrot},
+title = {{A}{R} {D}rone 2.0},
+month = June,
+year = {2015},
+howpublished = {\url{http://www.ardrone2.parrot.com/}}
+}
+
+@MISC{www:googleosb,
+author = {{G}oogle},
+title = {{O}pen {S}ource {B}log},
+month = June,
+year = {2015},
+howpublished = {\url{http://www.google-opensource.blogspot.ch/}}
+}
+
+@MISC{www:googleheliostat,
+author = {{G}oogle},
+title = {{W}ind {O}bservation},
+month = June,
+year = {2015},
+howpublished = {\url{http://www.google.org/pdfs/google_heliostat_wind_data_collection.pdf}}
+}
+
+@MISC{www:robustquad,
+author = {{B}erkenkamp, {F}
+{S}choellig, {A}{P}},
+title = {{R}obust {L}earning {C}ontrol {B}ased on {G}aussian {P}rocess {R}egression},
+month = June,
+year = {2015},
+howpublished = {\url{https://www.youtu.be/YqhLnCm0KXY}}
+}
+
+@MISC{www:hpmpc,
+author = {{F}rison, {G}ianluca},
+title = {{H}igh {P}erformance implementation of solvers for {M}{P}{C}},
+month = June,
+year = {2015},
+howpublished = {\url{https://www.github.com/giaf/hpmpc}}
+}
+
+@MISC{www:forces,
+author = {{D}omahidi, {A}lexander and
+{J}erez, {J}uan},
+title = {{FORCES} {P}ro},
+month = June,
+year = {2015},
+howpublished = {\url{https://www.embotech.com/}}
+}
+
+
+@MISC{www:acado,
+author = {{F}erreau, {H}ans {J}oachim},
+title = {{ACADO} {M}anual},
+month = June,
+year = {2015},
+howpublished = {\url{http://www.acado.github.io/documentation.html}}
+}
+
+@MISC{www:rotors,
+author = {{F}urrer, {F}adri and
+{B}urri, {M}ichael and
+{A}chtelik, {M}arkus},
+title = {{R}otor{S} - a MAV gazebo simulator},
+month = June,
+year = {2015},
+howpublished = {\url{https://www.github.com/ethz-asl/rotors_simulator}}
+}
+
+
+@MISC{www:asctecinspect,
+author = {{A}scending {T}echnologies ({A}sc{T}ec)},
+title = {{I}ndustrial {C}ivil {I}nfrastructure {I}nspection},
+month = June,
+year = {2015},
+howpublished = {\url{http://www.asctec.de/en/industrial-civil-infrastructure-inspection/}}
+}

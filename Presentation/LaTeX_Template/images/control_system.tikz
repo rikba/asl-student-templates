@@ -1,0 +1,50 @@
+\begin{tikzpicture}[auto, font=\small]
+% coordinates
+\coordinate (orig) at (0,0);
+% inputs
+\coordinate (Tin) at (orig);
+\coordinate (phiin) at ($(orig)- (0,1.75)$);
+\coordinate (thetain) at ($(phiin)- (0,1.75)$);
+\coordinate (psiin) at ($(thetain)- (0,1.75)$);
+% boxes
+\coordinate (LLA) at ($(Tin) + (0.75,-0.75)$);
+\coordinate (LLB) at ($(phiin) + (0.75,-0.75)$);
+\coordinate (LLC) at ($(thetain) + (0.75,-0.75)$);
+\coordinate (LLD) at ($(LLC) + (1.5+1.25,0)$);
+
+% nodes
+% boxes
+\node[draw,minimum width=1.5cm, minimum height=1.5cm, anchor=south west, text width=1.5cm, align=center] (A) at (LLA) {$\Large 1$};
+\node[draw,minimum width=1.5cm, minimum height=1.5cm, anchor=south west, text width=1.5cm, align=center] (B) at (LLB) {$G_{\phi_{ref} \rightarrow \phi}$};
+\node[draw,minimum width=1.5cm, minimum height=1.5cm, anchor=south west, text width=1.5cm, align=center] (C) at (LLC) {$G_{\theta_{ref} \rightarrow \theta}$};
+\node[draw,minimum width=3cm, minimum height=3.25cm, anchor=south west, align=center] (D) at (LLD) {$\frac{1}{m} \left( \rotBW \displaystyle \sum_{i=1}^n \left(\mathbf{F}_{T,i} + \mathbf{F}_{D,i} \right) + \mathbf{F}_G \right)$};
+
+\node[draw,minimum width=0.75cm, minimum height=0.75cm, anchor=west, text width=0.75cm, align=center] (E) at ($(D.0) + (0.5,0)$) {$\Large \int$};
+\node[draw,minimum width=0.75cm, minimum height=0.75cm, anchor=west, text width=0.75cm, align=center] (F) at ($(E.0) + (0.5,0)$) {$\Large \int$};
+% coordinates at boxes
+\coordinate (DTin) at ($(D.180) + (0,2*0.55)$);
+\coordinate (Dphiin) at ($(D.180) + (0,1*0.55)$);
+\coordinate (Dthetain) at ($(D.180)$);
+\coordinate (Dpsiin) at ($(D.180) - (0,1*0.55)$);
+\coordinate (Ddxin) at ($(D.180) - (0,2*0.55)$);
+\coordinate[above=of D.90] (win);
+%lines
+\draw[->] (Tin) -- node[at start,above]{$T_{ref}$} (A.180);
+\draw[->] (phiin) -- node[at start,above]{$\phi_{ref}$} (B.180);
+\draw[->] (thetain) -- node[at start,above]{$\theta_{ref}$} (C.180);
+\draw[->] (A.0) -| node[near start,above]{$T$} ($(DTin) - (0.5,0)$) -- (DTin);
+\draw[->] (B.0) -| node[near start,above]{$\phi$} ($(Dphiin) - (0.5,0)$) --  (Dphiin);
+\draw[->] (C.0) -| node[near start,above]{$\theta$} ($(Dthetain) - (0.75,0)$) -- (Dthetain);
+\draw[->] (psiin) -| node[at start,above]{$\psi_{m}$} ($(Dpsiin) - (0.5,0)$) -- (Dpsiin);
+
+\draw[->] (D.0) -- node[above]{${\mathbf{a}}$} (E.180);
+\draw[->] (E.0) -- node[above]{${\mathbf{v}}$} (F.180);
+\coordinate (out) at ($(F.0) + (0.5,0)$);
+\draw[->] (F.0) -- node[above]{$\mathbf{r}$} (out);
+
+\draw[->] ($(E.0) + (0.5/2,0)$) |- ($(D.south west) - (0.25,0.5)$) |- (Ddxin);
+
+\draw[->] (win) node[above]{$\E[\mathbf{w}]$}  -- (D.90);
+
+
+\end{tikzpicture}

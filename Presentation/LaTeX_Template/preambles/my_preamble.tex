@@ -1,0 +1,74 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% MY PACKAGES
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% SI units
+\usepackage{siunitx}
+% matlab2tikz pictures
+\usepackage{pgfplots}
+% block diagram with tikz
+\usepackage{tikz}
+\usepackage{tikzscale}	% includegraphics .tikz
+\usetikzlibrary{calc,
+positioning}
+% gnuplot eps
+\usepackage[outdir=./images/]{epstopdf}
+% URL citing
+\usepackage{url}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% MY MACROS
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% find inkscape pdfs
+\graphicspath{{images/}}
+
+% coordinate system subscript
+\newcommand{\world}[1]{#1_{\mathcal{W}}}
+\newcommand{\orientation}[1]{#1_\mathcal{O}}
+\newcommand{\body}[1]{#1_\mathcal{B}}
+% rotation matrices
+\newcommand{\rotOW}{\mathbf{R}_{\mathcal{O}\mathcal{W}}}
+\newcommand{\rotWO}{\mathbf{R}_{\mathcal{W}\mathcal{O}}}
+\newcommand{\rotOB}{\mathbf{R}_{\mathcal{O}\mathcal{B}}}
+\newcommand{\rotBO}{\mathbf{R}_{\mathcal{B}\mathcal{O}}}
+\newcommand{\rotBW}{\mathbf{R}_{\mathcal{B}\mathcal{W}}}
+\newcommand{\rotWB}{\mathbf{R}_{\mathcal{W}\mathcal{B}}}
+% math symbols
+\newcommand{\E}{\mathrm{E}}
+\newcommand{\Var}{\mathrm{Var}}
+\newcommand*\mean[1]{\overline{#1}}
+\renewcommand{\d}[1]{\ensuremath{\operatorname{d}\!{#1}}}
+\newcommand{\ddt}{\frac{\d{}}{\d{t}}}
+\newcommand{\norm}[1]{\left\lVert#1\right\rVert}
+\newcommand{\doublesize}[1]{\scalebox{2}{$#1$}}
+\newcommand{\onehalfsize}[1]{\scalebox{1.5}{$#1$}}
+\DeclareMathOperator*{\argmin}{\arg\!\min}
+
+% matlab tikz figure size
+\newlength\figureheight 
+\newlength\figurewidth
+\setlength\figurewidth{0.35\textwidth} 
+\setlength\figureheight{0.6\figurewidth} 
+
+
+\newlength\squarefigureheight 
+\newlength\squarefigurewidth
+\setlength\squarefigurewidth{0.4\textwidth} 
+\setlength\squarefigureheight{\figurewidth} 
+
+
+\pgfplotsset{compat=newest}
+
+% blank pages
+\newcommand{\blankpage}[1]{\ETHslide
+\section*{}
+\vspace*{\fill}
+\begin{minipage}{\textwidth}
+\centering
+\Huge{#1}	
+\end{minipage}
+\addcontentsline{toc}{section}{#1}
+\normalsize{}
+\vspace*{\fill}
+\clearpage}

@@ -1,0 +1,45 @@
+reset
+path_to_data = "~/workspace/ASL_student_project/Documents/Wind_Measurement/06-04-2011.txt"
+path_to_image_folder = "~/workspace/ASL_student_project/Repositories/report-fork/Presentation/LaTeX_Template/images/"
+
+set datafile separator ","
+set xdata time
+set timefmt "%H:%M:%S"
+
+# whole day
+set xrange ["00:00:00":"23:59:59"]
+set yrange [0:16]
+set format x "%H"
+set xlabel 'time $[\si{\hour}]$' offset 0,1
+set xtics '00:00:00','06:00:00','24:00:00'
+set ytics 0,4,16
+
+set style rect fc lt -1 fs solid 0.6 noborder
+set obj rect from first '05:30:00', graph 0 to first '05:33:00', graph 1 back
+
+set terminal epslatex size 6.095cm,3.3cm color colortext
+set output path_to_image_folder."windday.tex"
+plot path_to_data using 2:23 every 200 title ''
+
+
+
+# 3 minutes
+unset obj
+set xrange ["05:30:00":"05:33:00"]
+set yrange [0:12]
+set format x "%M"
+set xlabel 'time $[\si{\minute}]$' offset 0,1
+set xtics '05:30:00','00:01:00','05:33:00'
+set ytics 0,2,12
+set obj rect from first '05:32:00', graph 0 to first '05:32:02', graph 1 back
+
+
+set terminal epslatex size 6.095cm,3.3cm color colortext
+set output path_to_image_folder.'windminute.tex'
+plot path_to_data using 2:23 title ''
+
+set terminal x11
+set ylabel 'Wind Speed [m/s]'
+plot path_to_data using 2:23 title 'wind speed measurement'
+
+

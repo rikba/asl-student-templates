@@ -1,0 +1,24 @@
+\ETHslide
+\section*{Wind Model}
+%\addcontentsline{toc}{section}{Wind Model}
+
+
+\begin{minipage}{0.5\textwidth}
+Stationary stochastic process
+\begin{align}
+\mathbf{w}(k+1) &= \mathbf{w}(k) + \boldsymbol{\sigma} \boldsymbol{\varepsilon}(k) \nonumber \\ 
+{\varepsilon}_i (k) &\sim \mathcal{N}(0,1) \; \forall i \in \{ x,y,z \} \nonumber
+\end{align}
+\end{minipage}
+\begin{minipage}{0.49\textwidth}
+	\centering
+	\tiny{
+	\input{images/windday.tex}
+	\input{images/windminute.tex}
+	\tiny{Wind speed observations in $[\si{\metre\per\second}$], \cite{www:googleheliostat}} 
+	}
+%    \def\figurewidth{{0.5\textwidth}}
+%    \def\figureheight{0.6\figurewidth}
+\end{minipage}
+
+\clearpage

@@ -1,0 +1,17 @@
+\ETHslide
+\section*{Nonlinear MPC Algorithm}
+%\addcontentsline{toc}{section}{}
+\vspace*{\fill}
+
+At every sample time:
+\begin{itemize}
+\item[\ETHitem] Set current state, wind and heading
+\item[\ETHitem] Set $N+1$ references
+\item[\ETHitem] Set previous optimal solution as warm start
+\item[\ETHitem] Solve finite-horizon optimal control problem (ACADO)
+\item[\ETHitem] Update integrator
+\item[\ETHitem] Apply first optimal control action to system
+\end{itemize}
+
+\vspace*{\fill}
+\clearpage

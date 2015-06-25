@@ -294,7 +294,7 @@ The MPC can be summarized in the following steps:
 \item repeat at every sample time
 \begin{enumerate}
 \item update state and disturbance estimation \ref{eq:mpc_obsv_update} \label{enum:mpc_start}
-\item calculate $N$ desired steady-state inputs and states \ref{eq:steady_state_ls}
+\item calculate $N+1$ desired steady-state inputs and states \ref{eq:steady_state_ls}
 \item solve optimization problem \ref{eq:mpc_opti}
 \item apply first control input to system \label{enum:mpc_finish}
 \end{enumerate}
@@ -500,7 +500,7 @@ We consider the following continuous time optimal control problem (OCP).
 \begin{align}
 &\min_{x(\cdot),u(\cdot)} &&\int_{t}^{t+NT_s} \left( ||x(\tau)-x_{ref}(\tau)||_Q^2 + ||u(\tau)-u_{ref}(\tau)||_R^2 \d \tau \right)  \nonumber \\
 &&&+ ||x(t+NT_s)-x_{ref}(t+NT_s)||_P^2, \nonumber \\
-&s.t. &&\dot{x}(\tau) = f(x(\tau),u(\tau)), \nonumber \\
+&s.t. &&\dot{x}(\tau) = f(x(\tau),u(\tau),w(\tau),\psi(\tau)), \nonumber \\
 &&&\dot{w}(\tau) = 0, \nonumber \\
 &&&\dot{\psi}(\tau) = 0, \nonumber \\
 &&&x(\tau) \in \mathcal{X}, \; u(\tau) \in \mathcal{U}, \quad \forall\tau\in\left[t,t+NT_s\right], \nonumber \\

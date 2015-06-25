@@ -1,0 +1,22 @@
+\ETHslide
+\section*{Linear MPC OCP}
+%\addcontentsline{toc}{section}{}
+\footnotesize{
+\begin{align}
+&\min_{u(\cdot),x(\cdot)}
+& & ||x_N-\bar{x}_t||_P^2 + \sum_{k=0}^{N-1} ||x_k - \bar{x}_t||_Q^2 + ||u_k - \bar{u}_t||_R^2  \nonumber\\
+& \text{s.t.} 
+& & x_{k+1} = A x_k + B u_k + B_w w_k + B_d d_k, & k = 0, \ldots, N-1 \nonumber\\
+& & & w_{k+1} = w_k  & k = 0, \ldots, N-1 \nonumber\\
+& & & d_{k+1} = d_k, & k = 0, \ldots, N-1 \nonumber\\
+& & & \begin{bmatrix}
+T_{min} \\ -30\si{\degree} \\ -30\si{\degree}
+\end{bmatrix} \leq u_k \leq \begin{bmatrix}
+T_{max} \\ 30\si{\degree} \\ 30\si{\degree}
+\end{bmatrix} & k = 0, \ldots, N-1 \nonumber\\
+& & & x_0 = \hat x (t), \; d_0 = \hat d(t), \; w_0 = \hat w(t) \nonumber \\
+& & & N=40 \nonumber
+\end{align}
+}
+\normalsize{}
+\clearpage
