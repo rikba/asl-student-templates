@@ -1,0 +1,48 @@
+\begin{tikzpicture}[auto, font=\small]
+% coordinates
+\coordinate (orig) at (0,0);
+\coordinate (LLA) at (orig);
+\coordinate (LLB) at (6.5,0);
+\coordinate (out) at (12.5,0);
+
+
+% nodes
+\node[draw, minimum width=5cm, minimum height = 4cm, anchor=west, text width=5cm,align=center] (A) at (LLA) {\begin{align*}
+&\argmin_{U_t}&  &\sum_{k=0}^{N-1} q(x_{t+k},u_{t+k}) \\
+&\text{s.t.}  &  &x_t = x(t) \\
+&	          &  &x_{t+k+1} = Ax_{t+k} + Bu_{t+k} \\
+&	          &  &x_{t+k}\in\mathcal{X}, \; u_{t+k}\in\mathcal{U}
+\end{align*}};
+\node[draw, minimum width=4cm, minimum height = 4cm, anchor=west, text width=4cm,align=center] (B) at (LLB) {\Huge{\text{Plant}}};
+
+% edges
+\draw[->] (A.0) -- node[above] {$u^*_t$} (B.180);
+\draw[->] (B.0) -- node[above] {Output $y(t)$} (out);
+\coordinate (stateinter) at ($(A.270) - (0,1)$);
+\draw[-] (B.270) |- node[near end, above] {State $x(t)$} (stateinter);
+\draw[->] (stateinter) -- (A.270);
+
+
+% edges
+%\draw[->] (in1) -- node[above] {$\mathbf{r}_{ref},\mathbf{v}_{ref}$} (A.180);
+%
+%\draw[->] ($(A.0) + (0,0.5)$) -- node[above] {$T_{ref}$} ($(C.180) + (0,1.25/2)$);
+%\draw[->] (A.0) -- node[above] {$\phi_{ref}$} ($(B.180) + (0,0.75)$);
+%\draw[->] ($(A.0) - (0,0.5)$) -- node[above] {$\theta_{ref}$} ($(B.180) + (0,0.25)$);
+%
+%\draw[-] (in2) -- node[above] {$\psi_{ref}$} (in2inter1);
+%\draw[->] (in2inter1) -- node {} ($(B.180) -  (0,0.25)$);
+%
+%\draw[->] (B.0) -- node[above] {$\boldsymbol{\tau}_{ref}$} ($(C.180) - (0,1.25/2)$);
+%
+%\draw[->] (C.0) -- node[above] {$\mathbf{n}_{ref}$} (D.180);
+%
+%\draw[-] (D.0) -- node[] {} (out1inter1);
+%\path[fill] (out1inter1) circle[radius=1pt];
+%\draw[->] (out1inter1) -- node[] {} (out1);
+%
+%\path[draw,-] (out1inter1) |- node[near end,below] {$\mathbf{x},\mathbf{\dot{x}},\mathbf{q},\boldsymbol{\omega}$} (out1inter2) ;
+%\path[draw,->] (out1inter2) |- ($(B.180) - (0,0.75)$) ;
+%\path[draw,->] (out1inter2) -| ($(A.270)$) ;
+
+\end{tikzpicture}

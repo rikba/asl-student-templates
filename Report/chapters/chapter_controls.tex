@@ -186,7 +186,13 @@ In the top view \ref{fig:lqri_helix_xy} it is visible that the controller takes 
 \section{MPC} 
 Model predictive control is an effective control technique to deal with multivariable constrained control problems. Instead of solving an infinite horizon optimal control problem like LQR, MPC solves a finite horizon problem in a repeated fashion. 
 
-At every sampling time step $t$ a $N$--step open-loop optimal control problem (OCP) is solved. The solution of the first step is then applied as a control input $u_t$ and the rest is dismissed. At the next time step $t+T_s$ the problem is initialized with the current state $x_{t+T_s}$ and the open-loop optimal control procedure is repeated to find $u_{t+T_s}$. This iterative control technique is also referred to as receding horizon control (RHC). An introduction on the topic and theory can be found in Morari's and Lee's essay \cite{Morari1999} or Maciejowski's book \cite{Maciejowski2002}.
+At every sampling time step $t$ a $N$--step open-loop optimal control problem (OCP) is solved. The solution of the first step is then applied as a control input $u_t$ and the rest is dismissed. At the next time step $t+T_s$ the problem is initialized with the current state $x_{t+T_s}$ and the open-loop optimal control procedure is repeated to find $u_{t+T_s}$. This iterative control technique is also referred to as receding horizon control (RHC). The principle is portrayed in \ref{fig:rhc}.  An introduction on the topic and theory in general can be found in Morari's and Lee's essay \cite{Morari1999} or Maciejowski's book \cite{Maciejowski2002}.
+\begin{figure}
+\centering
+\input{images/rhc.tikz}
+\caption{Receding horizon control principle. At every sample time: 1. Measure/estimate current state $x(t)$, 2. Find the optimal input sequence for the entire planning window $N$: $U_t^* = \{ u_t^*, u_{t+1}^*, \ldots, u_{t+N-1}^* \}$, 3. Implement the first control action $u_t^*$.}
+\label{fig:rhc}
+\end{figure}
 
 The main advantage of model predictive control is the incorporation of constraints on inputs and states. This allows you to meet safety constraints and at the same time push the system to the limits. Second, due to its predictive nature, the controller has automatic feed-forward behavior. Given the OCP is convex, e.g. linear system, quadratic cost and box constraints, very efficient solvers are available which can calculate the solution online. The solution is optimal with respect to the formulation. Additionally, linear MPC has some advances in theory, like stability guarantees and offset-free control. Given a linear system, the control problem is straight forward to set up.
 
