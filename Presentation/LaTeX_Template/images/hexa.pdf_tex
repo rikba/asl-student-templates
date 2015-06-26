@@ -53,18 +53,15 @@
     \put(0.56481407,0.28644955){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\body{x}$}}}%
     \put(0.5186087,0.34007303){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\body{z}$}}}%
     \put(0.42880158,0.28517974){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\body{y}$}}}%
-    \put(0.51370864,0.50157268){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$F_{1}$}}}%
-    \put(0.35721472,0.46048194){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$F_{2}$}}}%
-    \put(0.34930968,0.30396229){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$F_{3}$}}}%
-    \put(0.59910873,0.19171083){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$F_{4}$}}}%
-    \put(0.77038449,0.24546509){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$F_{5}$}}}%
-    \put(0.73612937,0.39566072){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$F_{6}$}}}%
+    \put(0.48842856,0.49853158){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$F_{1}$}}}%
+    \put(0.31702879,0.46569898){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$F_{2}$}}}%
+    \put(0.28825551,0.29501877){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$F_{3}$}}}%
+    \put(0.57674992,0.20363555){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$F_{4}$}}}%
+    \put(0.7503215,0.26180159){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$F_{5}$}}}%
+    \put(0.70935874,0.40162304){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$F_{6}$}}}%
     \put(0.20281963,0.05751648){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\world{x}$}}}%
     \put(0.16801446,0.09210857){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\world{y}$}}}%
     \put(0.10460456,0.16887387){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\world{z}$}}}%
-    \put(0.10544035,0.14055266){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\orientation{z}$}}}%
-    \put(0.0178725,0.10695458){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\orientation{y}$}}}%
-    \put(0.15724245,0.12788272){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\orientation{x}$}}}%
     \put(0.45558365,0.15960519){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$F_G$}}}%
   \end{picture}%
 \endgroup%
