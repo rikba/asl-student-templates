@@ -1,0 +1,24 @@
+\begin{tikzpicture}[auto, font=\small]
+% coordinates
+\coordinate (orig) at (0,0);
+\coordinate (LLA) at (2,0);
+\coordinate (LLB) at (5.5,0);
+\coordinate (outinter) at (8,0);
+\coordinate (out) at (9,0);
+
+
+% nodes
+\node[draw, minimum width=1.5cm, minimum height=1.5cm, anchor=west, text width=1.5cm, align=center] (A) at (LLA) {Position\\Control};
+\node[draw, minimum width=1.5cm, minimum height=1.5cm, anchor=west, text width=1.5cm, align=center,fill=black,opacity=0.6] (B) at (LLB) {MAV \\Black Box};
+
+% edges
+\draw[->] (orig) -- node[above] {$\mathbf{r}_{ref},\mathbf{v}_{ref},\psi_{ref}$} (A.180);
+\draw[->] (A.0) -- node[above] {$\begin{bmatrix}
+T_{ref} \\ \phi_{ref} \\ \theta_{ref} \\ \psi_{ref}
+\end{bmatrix}$} (B.180);
+\draw[->] (B.0) -- (out);
+\coordinate (feedback) at ($(A.270)-(0,0.75)$);
+\draw[-] (outinter) |- node[above,near end] {$\mathbf{r},\mathbf{v},\mathbf{q},\boldsymbol{\omega},\mathbf{w}$} (feedback);
+\draw[->] (feedback) -- (A.270);
+
+\end{tikzpicture}

@@ -1,38 +1,22 @@
 \ETHslide
-\section*{Control System}
-%\addcontentsline{toc}{section}{Control System}
+\section*{Black Box Dynamics Model}
 \vspace*{\fill}
-\begin{figure}[h]
-\centering
-\scalebox{0.5}{
+
+\begin{minipage}{0.6\textwidth}
+\scalebox{0.7}{
 \input{images/control_system.tikz}
 }
-\end{figure}
+\end{minipage}
+\begin{minipage}{0.39\textwidth}
 \tiny{
-\begin{align}
-f\left(\mathbf{x},\mathbf{u},\mathbf{w}\right) &= \ddt \mathbf{x}  
-= \begin{bmatrix}
-\mathbf{A}_\phi \begin{bmatrix}
-\frac{1}{8}\dot{\phi} \\ \phi
-\end{bmatrix}
-+ \mathbf{B}_\phi \phi_{ref} \\
-\mathbf{A}_\theta \begin{bmatrix}
-\frac{1}{8}\dot{\theta} \\ \theta
-\end{bmatrix}
-+ \mathbf{B}_\theta \theta_{ref} \\
-\mathbf{v}\\
-\frac{1}{m} \left( \mathbf{F}_{T,total} + \mathbf{F}_{D,total} \right)  + \begin{bmatrix}
-0 \\ 0 \\ -g
-\end{bmatrix} 
-\end{bmatrix} \nonumber
-\end{align}
+\begin{align*}
+\mathbf{x}&=\left[ \phi, \theta, \dot{\phi}, \dot{\theta}, x, y, z, \dot{x}, \dot{y}, \dot{z} \right]^T \\
+\mathbf{u}&=\left[ T, \phi_{ref}, \theta_{ref} \right]^T \\
+\mathbf{w}&= \left[ w_x, w_y, w_z \right]^T \\
+\mathbf{f}(\mathbf{x},\mathbf{u},\mathbf{w})&= \ddt \mathbf{x} 
+\end{align*}
 }
-\normalsize{}
-
-%\begin{minipage}{0.6\textwidth}
-%\end{minipage}
-%\begin{minipage}{0.39\textwidth}
-%\end{minipage}
+\end{minipage}
 
 \vspace*{\fill}
 \clearpage

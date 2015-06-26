@@ -15,9 +15,10 @@
 % nodes
 % boxes
 \node[draw,minimum width=1.5cm, minimum height=1.5cm, anchor=south west, text width=1.5cm, align=center] (A) at (LLA) {$\Large 1$};
-\node[draw,minimum width=1.5cm, minimum height=1.5cm, anchor=south west, text width=1.5cm, align=center] (B) at (LLB) {$G_{\phi_{ref} \rightarrow \phi}$};
-\node[draw,minimum width=1.5cm, minimum height=1.5cm, anchor=south west, text width=1.5cm, align=center] (C) at (LLC) {$G_{\theta_{ref} \rightarrow \theta}$};
-\node[draw,minimum width=3cm, minimum height=3.25cm, anchor=south west, align=center] (D) at (LLD) {$\frac{1}{m} \left( \rotWB \displaystyle \sum_{i=1}^n \left(\mathbf{F}_{T,i} + \mathbf{F}_{D,i} \right) + \mathbf{F}_G \right)$};
+\node[draw,minimum width=1.5cm, minimum height=1.5cm, anchor=south west, text width=1.5cm, align=center] (B) at (LLB) {$2$nd Order};
+\node[draw,minimum width=1.5cm, minimum height=1.5cm, anchor=south west, text width=1.5cm, align=center] (C) at (LLC) {$2$nd Order};
+\node[draw,minimum width=3cm, minimum height=3.25cm, anchor=south west, align=center] (D) at (LLD) {Newton\\
+Law};
 
 \node[draw,minimum width=0.75cm, minimum height=0.75cm, anchor=west, text width=0.75cm, align=center] (E) at ($(D.0) + (0.5,0)$) {$\Large \int$};
 \node[draw,minimum width=0.75cm, minimum height=0.75cm, anchor=west, text width=0.75cm, align=center] (F) at ($(E.0) + (0.5,0)$) {$\Large \int$};

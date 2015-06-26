@@ -36,7 +36,7 @@
   }%
   \providecommand\rotatebox[2]{#2}%
   \ifx\svgwidth\undefined%
-    \setlength{\unitlength}{271.075bp}%
+    \setlength{\unitlength}{216.575bp}%
     \ifx\svgscale\undefined%
       \relax%
     \else%
@@ -48,20 +48,20 @@
   \global\let\svgwidth\undefined%
   \global\let\svgscale\undefined%
   \makeatother%
-  \begin{picture}(1,0.57419533)%
+  \begin{picture}(1,0.63615376)%
     \put(0,0){\includegraphics[width=\unitlength]{hexa.pdf}}%
-    \put(0.56481407,0.28644955){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\body{x}$}}}%
-    \put(0.5186087,0.34007303){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\body{z}$}}}%
-    \put(0.42880158,0.28517974){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\body{y}$}}}%
-    \put(0.48842856,0.49853158){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$F_{1}$}}}%
-    \put(0.31702879,0.46569898){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$F_{2}$}}}%
-    \put(0.28825551,0.29501877){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$F_{3}$}}}%
-    \put(0.57674992,0.20363555){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$F_{4}$}}}%
-    \put(0.7503215,0.26180159){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$F_{5}$}}}%
-    \put(0.70935874,0.40162304){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$F_{6}$}}}%
-    \put(0.20281963,0.05751648){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\world{x}$}}}%
-    \put(0.16801446,0.09210857){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\world{y}$}}}%
-    \put(0.10460456,0.16887387){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\world{z}$}}}%
-    \put(0.45558365,0.15960519){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$F_G$}}}%
+    \put(0.61367644,0.32124812){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\body{x}$}}}%
+    \put(0.55584371,0.38836568){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\body{z}$}}}%
+    \put(0.44343709,0.31965877){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\body{y}$}}}%
+    \put(0.5180689,0.58669952){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$F_{1}$}}}%
+    \put(0.30353724,0.54560476){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$F_{2}$}}}%
+    \put(0.26752331,0.33197373){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$F_{3}$}}}%
+    \put(0.62861588,0.2175944){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$F_{4}$}}}%
+    \put(0.84586587,0.29039763){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$F_{5}$}}}%
+    \put(0.79459504,0.46540444){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$F_{6}$}}}%
+    \put(0.16058793,0.0347052){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\world{x}$}}}%
+    \put(0.11702422,0.07800221){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\world{y}$}}}%
+    \put(0.03765754,0.17408512){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\world{z}$}}}%
+    \put(0.47695874,0.16248402){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$F_G$}}}%
   \end{picture}%
 \endgroup%
