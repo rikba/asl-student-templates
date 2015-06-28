@@ -51,12 +51,18 @@ positioning}
 \setlength\figurewidth{0.35\textwidth} 
 \setlength\figureheight{0.6\figurewidth} 
 
+\newlength\figureheightlarge 
+\newlength\figurewidthlarge 
+\setlength\figurewidthlarge {0.6\textwidth} 
+\setlength\figureheightlarge {0.6\figurewidthlarge} 
 
 \newlength\squarefigureheight 
 \newlength\squarefigurewidth
-\setlength\squarefigurewidth{0.4\textwidth} 
+\setlength\squarefigurewidth{0.2\textwidth} 
 \setlength\squarefigureheight{\figurewidth} 
 
+% overlapping figures
+\def\Put(#1,#2)#3{\leavevmode\makebox(0,0){\put(#1,#2){#1}}}
 
 \pgfplotsset{compat=newest}
 
